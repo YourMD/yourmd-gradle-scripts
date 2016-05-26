@@ -1,0 +1,54 @@
+//
+// build.gradle
+//
+
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+
+buildscript {
+    ext {
+        awsSdkVersion = "1.10.76"
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.amazonaws:aws-java-sdk:${awsSdkVersion}"
+    }
+}
+
+def setupAwsCredentials = {
+    awsCredentials ->
+        def defaultCredentials = new DefaultAWSCredentialsProviderChain().getCredentials()
+        awsCredentials.accessKey = defaultCredentials.getAWSAccessKeyId()
+        awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven {
+        name "releases"
+        url 's3://yourmd-artifacts/maven/releases'
+        credentials(AwsCredentials, setupAwsCredentials)
+    }
+    maven {
+    name "snapshots"
+        url 's3://yourmd-artifacts/maven/snapshots'
+        credentials(AwsCredentials, setupAwsCredentials)
+    }
+}
+
+// EOF
+

@@ -1,0 +1,213 @@
+//
+// build.gradle
+//
+
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+
+buildscript {
+    ext {
+        // gradle
+        gradleVersion = "2.13"
+        gradleReleasePluginVersion = "2.4.0"
+        gradleDependencyMananagementVersion = "0.5.6.RELEASE"
+
+        // groovy
+        groovyVersion = "2.4.6"
+
+        // logging
+        slf4jVersion = "1.7.21"
+        logbackVersion = "1.1.7"
+        log4j2Version = "2.5"
+
+        // testing
+        assertjVersion = "3.4.1"
+        spockVersion = "1.0-groovy-2.4"
+        cglibVersion = "3.2.2"
+
+        // misc
+        lombokVersion = "1.16.8"
+        servletVersion = "3.1.0"
+
+        // AWS
+        awsSdkVersion = "1.10.76"
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven { url 'http://maven.springframework.org/release' }
+        maven { url 'http://repo.spring.io/plugins-release' }
+    }
+    dependencies {
+        classpath "com.amazonaws:aws-java-sdk:${awsSdkVersion}"
+        classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
+        classpath "io.spring.gradle:dependency-management-plugin:${gradleDependencyMananagementVersion}"
+    }
+}
+
+def setupAwsCredentials = {
+    awsCredentials ->
+        def defaultCredentials = new DefaultAWSCredentialsProviderChain().getCredentials()
+        awsCredentials.accessKey = defaultCredentials.getAWSAccessKeyId()
+        awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
+}
+
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+
+    apply plugin: 'io.spring.dependency-management'
+
+    // java bytecode version
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven { url 'http://maven.springframework.org/release' }
+        maven { url 'http://repo.spring.io/plugins-release' }
+
+        maven {
+            name "ymdreleases"
+            url 's3://yourmd-artifacts/maven/releases'
+            credentials(AwsCredentials, setupAwsCredentials)
+        }
+        maven {
+            name "ymdsnapshots"
+            url 's3://yourmd-artifacts/maven/snapshots'
+            credentials(AwsCredentials, setupAwsCredentials)
+        }
+    }
+
+    // create jar only if there is something to package
+    jar {
+        onlyIf { !sourceSets.main.allSource.files.isEmpty() }
+    }
+
+    // create sources jar
+    task sourcesJar(type: Jar, dependsOn: classes) {
+        classifier 'sources'
+        from sourceSets.main.allSource
+    }
+
+    // create javadoc jar
+    task javadocJar(type: Jar, dependsOn: javadoc) {
+        classifier = 'javadoc'
+        from javadoc.destinationDir
+    }
+
+    // compile groovy sources with invokedynamic support
+    tasks.withType(GroovyCompile) {
+        groovyOptions.optimizationOptions.indy = true
+    }
+
+    publishing {
+        repositories {
+            // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
+            add project.version.endsWith('-SNAPSHOT') ?
+                    project.repositories.ymdsnapshots : project.repositories.ymdreleases
+        }
+
+        publications {
+            main(MavenPublication) {
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+            }
+        }
+    }
+
+    // managed dependencies.
+    dependencyManagement {
+        dependencies {
+            // groovy
+            // groovy: invoke dynamic version
+            dependency "org.codehaus.groovy:groovy-all:${groovyVersion}:indy"
+
+            // logging
+            dependency "org.slf4j:slf4j-api:${slf4jVersion}"
+            dependency "ch.qos.logback:logback-classic:${logbackVersion}"
+            dependency "org.apache.logging.log4j:log4j-api:${log4j2Version}"
+            dependency "org.apache.logging.log4j:log4j-core:${log4j2Version}"
+            dependency "org.apache.logging.log4j:log4j-slf4j-impl:${log4j2Version}"
+
+            // testing
+            dependency "org.spockframework:spock-core:${spockVersion}"
+            dependency "org.spockframework:spock-spring:${spockVersion}"
+            dependency "org.assertj:assertj-core:${assertjVersion}"
+            dependency "cglib:cglib-nodep:${cglibVersion}"
+
+            // misc
+            dependency "org.projectlombok:lombok:${lombokVersion}"
+            dependency "javax.servlet:javax.servlet-api:${servletVersion}"
+        }
+    }
+
+    // dependencies for all projects
+    dependencies {
+        testCompile "org.slf4j:slf4j-api",
+                "org.codehaus.groovy:groovy-all",
+                "org.spockframework:spock-core",
+                "org.assertj:assertj-core"
+
+    }
+}
+
+// release plugin configuration
+release {
+    failOnCommitNeeded = true
+    failOnPublishNeeded = true
+    failOnSnapshotDependencies = true
+    failOnUnversionedFiles = true
+    failOnUpdateNeeded = true
+    revertOnFail = true
+    preCommitText = ''
+    preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
+    tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
+    newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
+    tagTemplate = 'v${version}'
+    versionPropertyFile = 'gradle.properties'
+    versionProperties = []
+    buildTasks = ['build']
+
+    git {
+        requireBranch = 'master'
+        pushToRemote = 'origin'
+        pushToBranchPrefix = ''
+    }
+}
+
+task awsCredentials << {
+    description "Displays AWS client credentials."
+    def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
+    println("AWS accessKey: " + creds.accessKey)
+    println("AWS secretKey: " + creds.secretKey)
+}
+
+task repositories << {
+    description "Displays all configured repositories."
+    project.repositories.each {
+        printf("%-30s %s\n", it.name, it.url)
+    }
+}
+
+task downloadDeps(type: Copy) {
+    description "Downloads all required dependencies."
+    from configurations.compileOnly, configurations.compile, configurations.testCompile, configurations.testRuntime
+    into 'build/downloaded-dependencies'
+    exclude '**/*.*'
+}
+
+task wrapper(type: Wrapper) {
+    description "Sets up gradle wrapper."
+    //gradleVersion = "2.13"
+    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
+}
+
+// EOF

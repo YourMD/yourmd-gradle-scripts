@@ -26,6 +26,8 @@ def setupAwsCredentials = {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.13'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+
 }
 
 apply plugin: 'java'
@@ -33,6 +35,9 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
+
+group 'md.your.gradle'
+// artifactId is stored in settings.gradle
 
 repositories {
     mavenLocal()

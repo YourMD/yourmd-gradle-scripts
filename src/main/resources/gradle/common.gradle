@@ -159,6 +159,16 @@ allprojects {
     }
 }
 
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+apply plugin: 'io.spring.dependency-management'
+
+
 // release plugin configuration
 release {
     failOnCommitNeeded = true
@@ -202,6 +212,11 @@ task downloadDeps(type: Copy) {
     from configurations.compileOnly, configurations.compile, configurations.testCompile, configurations.testRuntime
     into 'build/downloaded-dependencies'
     exclude '**/*.*'
+}
+
+task lsPlugins << {
+    description "Displays enabled plugins."
+    project.plugins.each {   println it.getClass().getSimpleName() }
 }
 
 task wrapper(type: Wrapper) {

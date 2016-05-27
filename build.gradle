@@ -2,26 +2,8 @@
 // build.gradle
 //
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
-
-buildscript {
-    ext {
-        awsSdkVersion = "1.10.76"
-    }
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-    dependencies {
-        classpath "com.amazonaws:aws-java-sdk:${awsSdkVersion}"
-    }
-}
-
-def setupAwsCredentials = {
-    awsCredentials ->
-        def defaultCredentials = new DefaultAWSCredentialsProviderChain().getCredentials()
-        awsCredentials.accessKey = defaultCredentials.getAWSAccessKeyId()
-        awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
+plugins {
+    id "com.jfrog.bintray" version "1.6"
 }
 
 task wrapper(type: Wrapper) {
@@ -44,16 +26,52 @@ repositories {
     mavenCentral()
     jcenter()
     maven {
-        name "releases"
-        url 's3://yourmd-artifacts/maven/releases'
-        credentials(AwsCredentials, setupAwsCredentials)
+        name "bintraySnapshots"
+        url  "http://dl.bintray.com/bfg/maven"
     }
     maven {
-    name "snapshots"
-        url 's3://yourmd-artifacts/maven/snapshots'
-        credentials(AwsCredentials, setupAwsCredentials)
+        name "bintrayReleases"
+        url  "http://dl.bintray.com/bfg/maven"
     }
 }
 
-// EOF
+publishing {
+    repositories {
+        // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
+        add project.version.endsWith('-SNAPSHOT') ?
+                project.repositories.bintraySnapshots : project.repositories.bintrayReleases
+    }
 
+    publications {
+        main(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+
+bintray {
+    user = project.property('bintray.user') ?: System.getenv('BINTRAY_USER')
+	key = project.property('bintray.key') ?: System.getenv('BINTRAY_API_KEY')
+
+    pkg {
+        repo = 'maven'
+        name = 'gradle-scripts'
+        userOrg = 'bfg'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/YourMD/yourmd-gradle-scripts.git'
+
+        version {
+            name = '1.0-Final'
+        }
+    }
+
+    publications = ['main']
+}
+
+task bt << {
+    println("user: " + bintray.user)
+    println("key:  " + bintray.key)
+}
+
+// EOF

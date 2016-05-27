@@ -1,0 +1,53 @@
+//
+// build.gradle
+//
+
+buildscript {
+    ext {
+        jacksonVersion = "2.7.4"
+    }
+}
+
+allprojects {
+    apply plugin: 'io.spring.dependency-management'
+
+    // managed dependencies
+    dependencyManagement {
+        dependencies {
+            dependency "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+            
+            dependency "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.module:jackson-module-afterburner:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.module:jackson-module-jsonSchema:${jacksonVersion}"
+            
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-guava:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-jsr353:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:${jacksonVersion}"
+
+            dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-protobuf:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:${jacksonVersion}"
+            
+            dependency "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.jaxrs:jackson-jaxrs-xml-provider:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.jaxrs:jackson-jaxrs-smile-provider:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.jaxrs:jackson-jaxrs-yaml-provider:${jacksonVersion}"
+
+        }
+    }
+
+    // dependencies for all projects
+    dependencies {
+        testCompile "org.spockframework:spock-spring"
+    }
+}
+
+
+// EOF

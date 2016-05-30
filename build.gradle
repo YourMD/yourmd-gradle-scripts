@@ -2,13 +2,27 @@
 // build.gradle
 //
 
+buildscript {
+    ext {
+        gradleReleasePluginVersion = "2.4.0"
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
+    }
+}
+
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
-
+apply plugin: 'net.researchgate.release'
 
 group 'md.your.gradle'
 // artifactId is stored in settings.gradle
@@ -79,6 +93,30 @@ uploadArchives {
                 }
             }
         }
+    }
+}
+
+// release plugin configuration
+release {
+    failOnCommitNeeded = true
+    failOnPublishNeeded = true
+    failOnSnapshotDependencies = true
+    failOnUnversionedFiles = true
+    failOnUpdateNeeded = true
+    revertOnFail = true
+    preCommitText = ''
+    preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
+    tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
+    newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
+    tagTemplate = 'v${version}'
+    versionPropertyFile = 'gradle.properties'
+    versionProperties = []
+    buildTasks = ['build']
+
+    git {
+        requireBranch = 'master'
+        pushToRemote = 'origin'
+        pushToBranchPrefix = ''
     }
 }
 

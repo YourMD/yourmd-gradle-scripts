@@ -104,7 +104,22 @@ so everybody using this project ends up with the same dependency set.
 |compileOnly|<ul><li></li></ul>|
 |testCompile|<ul><li>org.slf4j:slf4j-api</li><li>org.codehaus.groovy:groovy-all</li><li>org.spockframework:spock-core</li><li>org.assertj:assertj-core</li></ul>|
 
- 
 
+# How to deploy to maven OSSRH
 
+Add the following to your ```~/.gradle/gradle.properties```:
 
+```
+ossrhUsername=<osshr_jira_username>
+ossrhPassword=<osshr_jira_password>
+
+signing.keyId=0B735390
+signing.password=<key_password>
+signing.secretKeyRingFile=<path_to_secring.gpg>
+```
+
+Then upload using:
+
+```
+./gradlew uploadArchives
+```

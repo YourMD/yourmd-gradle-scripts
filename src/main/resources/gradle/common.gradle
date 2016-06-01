@@ -118,10 +118,30 @@ allprojects {
         from sourceSets.main.allSource
     }
 
-    // create javadoc jar
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
+    task awsCredentials << {
+        description "Displays AWS client credentials."
+        def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
+        println("AWS accessKey: " + creds.accessKey)
+        println("AWS secretKey: " + creds.secretKey)
+    }
+
+    task repositories << {
+        description "Displays all configured repositories."
+        project.repositories.each {
+            printf("%-30s %s\n", it.name, it.url)
+        }
+    }
+
+    task downloadDeps(type: Copy) {
+        description "Downloads all required dependencies."
+        from configurations.compileOnly, configurations.compile, configurations.testCompile, configurations.testRuntime
+        into 'build/downloaded-dependencies'
+        exclude '**/*.*'
+    }
+
+    task lsPlugins << {
+        description "Displays enabled plugins."
+        project.plugins.each {   println it.getClass().getSimpleName() }
     }
 
     // compile groovy sources with invokedynamic support
@@ -140,7 +160,6 @@ allprojects {
             main(MavenPublication) {
                 from components.java
                 artifact sourcesJar
-                artifact javadocJar
             }
         }
     }
@@ -219,36 +238,10 @@ release {
     }
 }
 
-task awsCredentials << {
-    description "Displays AWS client credentials."
-    def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
-    println("AWS accessKey: " + creds.accessKey)
-    println("AWS secretKey: " + creds.secretKey)
-}
-
-task repositories << {
-    description "Displays all configured repositories."
-    project.repositories.each {
-        printf("%-30s %s\n", it.name, it.url)
-    }
-}
-
-task downloadDeps(type: Copy) {
-    description "Downloads all required dependencies."
-    from configurations.compileOnly, configurations.compile, configurations.testCompile, configurations.testRuntime
-    into 'build/downloaded-dependencies'
-    exclude '**/*.*'
-}
-
-task lsPlugins << {
-    description "Displays enabled plugins."
-    project.plugins.each {   println it.getClass().getSimpleName() }
-}
-
 task wrapper(type: Wrapper) {
     description "Sets up gradle wrapper."
     //gradleVersion = "2.13"
-    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
+    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
 
 // EOF

@@ -16,17 +16,10 @@ buildscript {
     }
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    jcenter()
-}
-
-//apply plugin: "spring-boot"
-
 allprojects {
-    // apply plugin: "io.spring.dependency-management"
-    // apply plugin: "spring-boot"
+    apply plugin: "java"
+    apply plugin: "groovy"
+    apply plugin: "io.spring.dependency-management"
 
     // managed dependencies
     dependencyManagement {
@@ -118,6 +111,7 @@ allprojects {
     // dependencies for all projects
     dependencies {
         testCompile "org.springframework.boot:spring-boot-starter-test"
+        testCompile "org.spockframework:spock-spring"
     }
 }
 

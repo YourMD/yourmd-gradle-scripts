@@ -9,6 +9,8 @@ buildscript {
 }
 
 allprojects {
+    apply plugin: "java"
+    apply plugin: "groovy"
     apply plugin: 'io.spring.dependency-management'
 
     // managed dependencies
@@ -42,12 +44,6 @@ allprojects {
 
         }
     }
-
-    // dependencies for all projects
-    dependencies {
-        testCompile "org.spockframework:spock-spring"
-    }
 }
-
 
 // EOF

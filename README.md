@@ -8,6 +8,8 @@ in real-projects to reduce build boilerplate.
 | script | description |
 |---|---|
 |[*/gradle/common.gradle*](src/main/resources/gradle/common.gradle)|common build.gradle settings, **required**|
+|[*/gradle/jackson.gradle*](src/main/resources/gradle/jackson.gradle)|jackson dependency management|
+|[*/gradle/spring-boot.gradle*](src/main/resources/gradle/spring-boot.gradle)|spring-boot dependency management|
 
 See [src/main/resources/gradle](src/main/resources/gradle) directory for details.
 
@@ -49,7 +51,7 @@ dependencies {
 }
 
 // apply scripts from jar
-applyscript 'common-settings-${ymdGradleSettingsVersion}"/gradle/common.gradle'
+applyscript "common-settings-${ymdGradleSettingsVersion}/gradle/common.gradle"
 
 // DONE!
 //

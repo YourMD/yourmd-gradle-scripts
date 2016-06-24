@@ -7,17 +7,17 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 buildscript {
     ext {
         // gradle
-        gradleVersion = "2.13"
+        gradleVersion = "2.14"
         gradleReleasePluginVersion = "2.4.0"
         gradleDependencyMananagementVersion = "0.5.6.RELEASE"
 
         // groovy
-        groovyVersion = "2.4.6"
+        groovyVersion = "2.4.7"
 
         // logging
         slf4jVersion = "1.7.21"
         logbackVersion = "1.1.7"
-        log4j2Version = "2.5"
+        log4j2Version = "2.6.1"
 
         // testing
         assertjVersion = "3.4.1"
@@ -59,6 +59,16 @@ def setupAwsCredentials = {
         def defaultCredentials = new DefaultAWSCredentialsProviderChain().getCredentials()
         awsCredentials.accessKey = defaultCredentials.getAWSAccessKeyId()
         awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
+}
+
+def createTask(String name, Class<?> type = null, Closure closure) {
+    if (tasks.findByName(name)) {
+        logger.info("[WARN] task $name is already defined.")
+    } else {
+        def task = (type == null) ? tasks.create(name) : tasks.create(name, type)
+        if (closure) task.configure(closure)
+    }
+
 }
 
 apply plugin: "java"
@@ -113,35 +123,56 @@ allprojects {
     }
 
     // create sources jar
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier 'sources'
+    createTask("sourcesJar", Jar) {
+        dependsOn(classes)
+        classifier "sources"
         from sourceSets.main.allSource
     }
 
-    task awsCredentials << {
-        description "Displays AWS client credentials."
-        def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
-        println("AWS accessKey: " + creds.accessKey)
-        println("AWS secretKey: " + creds.secretKey)
+    // create javadoc jar
+    createTask("javadocJar", Jar) {
+        dependsOn(javadoc)
+        classifier = 'javadoc'
+        from javadoc.destinationDir
     }
 
-    task repositories << {
-        description "Displays all configured repositories."
-        project.repositories.each {
-            printf("%-30s %s\n", it.name, it.url)
+    createTask("awsCredentials") {
+        description "Displays AWS client credentials."
+        doLast {
+            def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
+            println("AWS accessKey: " + creds.accessKey)
+            println("AWS secretKey: " + creds.secretKey)
         }
     }
 
-    task downloadDeps(type: Copy) {
-        description "Downloads all required dependencies."
-        from configurations.compileOnly, configurations.compile, configurations.testCompile, configurations.testRuntime
-        into 'build/downloaded-dependencies'
-        exclude '**/*.*'
+    createTask("repositories") {
+        description "Displays all configured repositories."
+        doLast {
+            project.repositories.each {
+                printf("%-30s %s\n", it.name, it.url)
+            }
+        }
     }
 
-    task lsPlugins << {
+    createTask("downloadDeps") {
+        description "Downloads all required dependencies."
+        doLast {
+            project.rootProject.allprojects.each { subProject ->
+                subProject.buildscript.configurations.each { configuration ->
+                    println("$subProject -> $configuration")
+                    configuration.resolve()
+                }
+                subProject.configurations.each { configuration ->
+                    println("$subProject -> $configuration")
+                    configuration.resolve()
+                }
+            }
+        }
+    }
+
+    createTask("lsPlugins") {
         description "Displays enabled plugins."
-        project.plugins.each {   println it.getClass().getSimpleName() }
+        doLast { project.plugins.each { println it.getClass().getSimpleName() }}
     }
 
     // compile groovy sources with invokedynamic support
@@ -176,8 +207,13 @@ allprojects {
             dependency "org.slf4j:jcl-over-slf4j:${slf4jVersion}"
             dependency "org.slf4j:log4j-over-slf4j:${slf4jVersion}"
             dependency "org.slf4j:slf4j-jdk14:${slf4jVersion}"
+            dependency "org.slf4j:jul-to-slf4j:${slf4jVersion}"
+            dependency "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+            dependency "org.slf4j:slf4j-simple:${slf4jVersion}"
 
+            dependency "ch.qos.logback:logback-access:${logbackVersion}"
             dependency "ch.qos.logback:logback-classic:${logbackVersion}"
+
             dependency "org.apache.logging.log4j:log4j-api:${log4j2Version}"
             dependency "org.apache.logging.log4j:log4j-core:${log4j2Version}"
             dependency "org.apache.logging.log4j:log4j-slf4j-impl:${log4j2Version}"
@@ -238,9 +274,8 @@ release {
     }
 }
 
-task wrapper(type: Wrapper) {
-    description "Sets up gradle wrapper."
-    //gradleVersion = "2.13"
+createTask("wrapper", Wrapper) {
+    description "Sets up gradle wrapper [v${gradleVersion}]"
     distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
 

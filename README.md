@@ -30,7 +30,7 @@ Clone this project and install artifact jar into local maven repository:
 
 buildscript {
     ext {
-       ymdGradleSettingsVersion = "0.0.1-SNAPSHOT" // make sure to use latest version
+       ymdGradleSettingsVersion = "0.0.7" // make sure to use latest version
     }
 }
 

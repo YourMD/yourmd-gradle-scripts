@@ -24,9 +24,6 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'net.researchgate.release'
 
-group 'md.your.gradle'
-// artifactId is stored in settings.gradle
-
 repositories {
     mavenLocal()
     mavenCentral()

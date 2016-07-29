@@ -28,7 +28,7 @@ buildscript {
         lombokVersion = "1.16.8"
         servletVersion = "3.1.0"
         bugsnagVersion = "2.0.0"
-        rxjavaVersion  = "1.1.7"
+        rxjavaVersion  = "1.1.8"
 
         // swagger/springfox
         swaggerVersion = "1.5.9"
@@ -69,7 +69,6 @@ def createTask(String name, Class<?> type = null, Closure closure) {
         def task = (type == null) ? tasks.create(name) : tasks.create(name, type)
         if (closure) task.configure(closure)
     }
-
 }
 
 apply plugin: "java"
@@ -124,16 +123,14 @@ allprojects {
     }
 
     // create sources jar
-    createTask("sourcesJar", Jar) {
-        dependsOn(classes)
-        classifier "sources"
+    task sourcesJar(type: Jar, dependsOn: classes, overwrite: false) {
+        classifier = "sources"
         from sourceSets.main.allSource
     }
 
     // create javadoc jar
-    createTask("javadocJar", Jar) {
-        dependsOn(javadoc)
-        classifier = 'javadoc'
+    task javadocJar(type: Jar, dependsOn: [classes,javadoc], overwrite: false) {
+        classifier = "javadoc"
         from javadoc.destinationDir
     }
 
@@ -191,7 +188,13 @@ allprojects {
         publications {
             main(MavenPublication) {
                 from components.java
-                artifact sourcesJar
+
+                if (tasks.findByName("sourcesJar")) {
+                    artifact sourcesJar
+                }
+                if (tasks.findByName("javadocJar")) {
+                    artifact javadocJar
+                }
             }
         }
     }
@@ -200,7 +203,7 @@ allprojects {
     dependencyManagement {
         dependencies {
             // groovy: invoke dynamic version
-            dependency "org.codehaus.groovy:groovy-all:${groovyVersion}:indy"
+            dependency "org.codehaus.groovy:groovy-all:${groovyVersion}:indy@jar"
 
             // logging
             dependency "org.slf4j:slf4j-api:${slf4jVersion}"

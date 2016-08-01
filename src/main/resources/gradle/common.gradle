@@ -9,7 +9,7 @@ buildscript {
         // gradle
         gradleVersion = "2.14"
         gradleReleasePluginVersion = "2.4.0"
-        gradleDependencyMananagementVersion = "0.5.6.RELEASE"
+        gradleDependencyMananagementVersion = "0.6.0.RELEASE"
 
         // groovy
         groovyVersion = "2.4.7"
@@ -203,7 +203,7 @@ allprojects {
     dependencyManagement {
         dependencies {
             // groovy: invoke dynamic version
-            dependency "org.codehaus.groovy:groovy-all:${groovyVersion}:indy@jar"
+            dependency group: "org.codehaus.groovy", name: "groovy-all", version: "${groovyVersion}", classifier: "indy"
 
             // logging
             dependency "org.slf4j:slf4j-api:${slf4jVersion}"

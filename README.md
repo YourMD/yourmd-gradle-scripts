@@ -30,14 +30,14 @@ Clone this project and install artifact jar into local maven repository:
 
 buildscript {
     ext {
-       ymdGradleSettingsVersion = "0.0.7" // make sure to use latest version
+       ymdGradleSettingsVersion = "0.0.9" // make sure to use latest version
     }
 }
 
 plugins {
     id "com.orctom.applyscript" version "1.1"  // implements applyscript (required)
     id "net.researchgate.release" version  "2.4.0" // gradle release plugin (required)
-    id "io.spring.dependency-management" version  "0.5.6.RELEASE" // dependency management plugin (required)
+    id "io.spring.dependency-management" version  "0.6.0.RELEASE" // dependency management plugin (required)
 }
 
 repositories {

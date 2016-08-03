@@ -28,7 +28,7 @@ allprojects {
             dependency "com.fasterxml.jackson.datatype:jackson-datatype-joda:${jacksonVersion}"
             dependency "com.fasterxml.jackson.datatype:jackson-datatype-guava:${jacksonVersion}"
             dependency "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
-            dependency "com.fasterxml.jackson.datatype:jackson-datatype-jdk7:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.datatype:jackson-datatype-jdk7:2.6.7"
             dependency "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
             dependency "com.fasterxml.jackson.datatype:jackson-datatype-jsr353:${jacksonVersion}"
             dependency "com.fasterxml.jackson.datatype:jackson-datatype-hibernate4:${jacksonVersion}"

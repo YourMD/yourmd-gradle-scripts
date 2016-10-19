@@ -325,15 +325,62 @@ if (project.tasks.test) {
 
 /**
  * <p>Creates copy of final artifact jar without version identifier.</p>
+ * <p>Uses <i>${project.buildDir}/libs/${project.name}-${version}.jar</i> as source
+ * and <i>${project.buildDir}/libs/${project.name}.jar</i> as destination
+ * @return number of files copied
+ * @throws IOException in case of io errors
+ * @throws GradleScriptException in case of bad input
  */
 ext.makeDeployArtifact = { ->
-    String src = "${buildDir}/libs/${project.name}-${version}.jar"
-    String dst = "${buildDir}/libs/${project.name}.jar"
-    if (!Files.exists(Paths.get(src))) {
-        throw new GradleScriptException("Source doesn't exist: $src", null)
+    copyFile("${project.buildDir}/libs/${project.name}-${version}.jar",
+             "${project.buildDir}/libs/${project.name}.jar")
+}
+
+/**
+ * Copies single file and creates missing destination directories
+ * 
+ * @param src source file
+ * @param dsr destination filename
+ * @return number of files copied
+ * @throws IOException in case of io errors
+ * @throws GradleScriptException in case of bad input
+ */
+ext.copyFile = { src, dst ->
+    def srcPath = Paths.get(src)
+    if (!(Files.exists(srcPath) && Files.isRegularFile(srcPath))) {
+        throw new GradleScriptException("Source file doesn't exist or is not a plain file: $srcPath", null)
     }
-    println("Copying ${src} -> ${dst}")
-    Files.copy(Paths.get(src), Paths.get(dst), StandardCopyOption.REPLACE_EXISTING)
+
+    def parent = Paths.get(dst).getParent()
+    if (!Files.isDirectory(parent)) {
+      logger.warn("Creating directory: '{}'", parent)
+      Files.createDirectories(parent)
+    }
+
+    // copy the file
+    def dstPath = Paths.get(dst)
+    logger.warn("Copying '{}' => '{}'", srcPath, dstPath)
+    Files.copy(srcPath, dstPath, StandardCopyOption.REPLACE_EXISTING)
+
+    1
+}
+
+/**
+ * Copies more than many files.
+ * 
+ * @param dstDir destination directory as string
+ * @param srcFiles source files as collection of strings
+ * @return number of files copied
+ * @throws IOException in case of io errors
+ * @throws GradleScriptException in case of bad input
+ */
+ext.copyFiles = { dstDir, srcFiles ->
+    int num = 0
+    srcFiles.each { file ->
+        def basename = Paths.get(file).getFileName()
+        num += copyFile(file, "${dstDir}/${basename}")
+    }
+    num
 }
 
 // EOF

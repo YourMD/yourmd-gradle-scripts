@@ -39,6 +39,7 @@ allprojects {
             dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
             dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${jacksonVersion}"
             dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-csv:${jacksonVersion}"
+            dependency "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
             
             dependency "com.fasterxml.jackson.jaxrs:jackson-jaxrs-base:${jacksonVersion}"
             dependency "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:${jacksonVersion}"

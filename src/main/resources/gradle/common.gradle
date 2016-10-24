@@ -34,7 +34,7 @@ buildscript {
 
         // swagger/springfox
         swaggerVersion = "1.5.10"
-        springfoxVersion = "2.6.0"
+        springfoxVersion = "2.5.0"
 
         // spring
         springBootVersion = "1.4.1.RELEASE"

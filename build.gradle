@@ -35,11 +35,6 @@ task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.14.1'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip"
-}
-
 artifacts {
     //archives javadocJar, sourcesJar
     archives sourcesJar

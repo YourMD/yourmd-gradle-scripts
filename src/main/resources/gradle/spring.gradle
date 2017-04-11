@@ -3,33 +3,33 @@
 //
 
 buildscript {
-    ext {
-        springVersion = "4.3.7.RELEASE"
-    }
+  ext {
+    springVersion = "4.3.7.RELEASE"
+  }
 }
 
 allprojects {
-    apply plugin: "java"
-    apply plugin: "groovy"
-    apply plugin: "io.spring.dependency-management"
+  apply plugin: "java"
+  apply plugin: "groovy"
+  apply plugin: "io.spring.dependency-management"
 
-    // managed dependencies
-    dependencyManagement {
-        dependencies {
-            dependency "org.springframework:spring-core:${springVersion}"
-            dependency "org.springframework:spring-beans:${springVersion}"
-            dependency "org.springframework:spring-context:${springVersion}"
-            dependency "org.springframework:spring-web:${springVersion}"
-            dependency "org.springframework:spring-webmvc:${springVersion}"
-            dependency "org.springframework:spring-expression:${springVersion}"
-            dependency "org.springframework:spring-jdbc:${springVersion}"
-            dependency "org.springframework:spring-test:${springVersion}"
-        }
-    }
-
+  // managed dependencies
+  dependencyManagement {
     dependencies {
-        testCompile "org.spockframework:spock-spring"
+      dependency "org.springframework:spring-core:${springVersion}"
+      dependency "org.springframework:spring-beans:${springVersion}"
+      dependency "org.springframework:spring-context:${springVersion}"
+      dependency "org.springframework:spring-web:${springVersion}"
+      dependency "org.springframework:spring-webmvc:${springVersion}"
+      dependency "org.springframework:spring-expression:${springVersion}"
+      dependency "org.springframework:spring-jdbc:${springVersion}"
+      dependency "org.springframework:spring-test:${springVersion}"
     }
+  }
+
+  dependencies {
+    testCompile "org.spockframework:spock-spring"
+  }
 }
 
 // vim:shiftwidth=2 softtabstop=2 expandtab

@@ -62,28 +62,28 @@ boolean isResolvableConfiguration(cfg) {
 
   // gradle >= 3.4 contains this.
   try {
-    return cfg.isCanBeResolved()
+  return cfg.isCanBeResolved()
   } catch (Exception e) {
-    // doesn't matter, we're probably running on gradle version < 3.4
-    // where all configurations are resolvable
+  // doesn't matter, we're probably running on gradle version < 3.4
+  // where all configurations are resolvable
   }
   true
 }
 
 def setupAwsCredentials = {
-    awsCredentials ->
-        def defaultCredentials = new DefaultAWSCredentialsProviderChain().getCredentials()
-        awsCredentials.accessKey = defaultCredentials.getAWSAccessKeyId()
-        awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
+  awsCredentials ->
+    def defaultCredentials = new DefaultAWSCredentialsProviderChain().getCredentials()
+    awsCredentials.accessKey = defaultCredentials.getAWSAccessKeyId()
+    awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
 }
 
 def createTask(String name, Class<?> type = null, Closure closure) {
-    if (tasks.findByName(name)) {
-        logger.info("[WARN] task $name is already defined.")
-    } else {
-        def task = (type == null) ? tasks.create(name) : tasks.create(name, type)
-        if (closure) task.configure(closure)
-    }
+  if (tasks.findByName(name)) {
+    logger.info("[WARN] task $name is already defined.")
+  } else {
+    def task = (type == null) ? tasks.create(name) : tasks.create(name, type)
+    if (closure) task.configure(closure)
+  }
 }
 
 apply plugin: "java"
@@ -97,225 +97,225 @@ apply plugin: "net.researchgate.release"
 apply plugin: "com.orctom.applyscript"
 
 allprojects {
-    apply plugin: "java"
-    apply plugin: "groovy"
-    apply plugin: "idea"
-    apply plugin: "eclipse"
-    apply plugin: "maven"
-    apply plugin: "maven-publish"
+  apply plugin: "java"
+  apply plugin: "groovy"
+  apply plugin: "idea"
+  apply plugin: "eclipse"
+  apply plugin: "maven"
+  apply plugin: "maven-publish"
 
-    apply plugin: "io.spring.dependency-management"
-    apply plugin: "com.orctom.applyscript"
+  apply plugin: "io.spring.dependency-management"
+  apply plugin: "com.orctom.applyscript"
 
-    // java bytecode version
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+  // java bytecode version
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
 
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven { url "http://maven.springframework.org/release" }
+    maven { url "http://repo.spring.io/plugins-release" }
+    maven { url "https://oss.sonatype.org/content/repositories/releases" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+
+    maven {
+      name "ymdreleases"
+      url "s3://yourmd-artifacts/maven/releases"
+      credentials(AwsCredentials, setupAwsCredentials)
+    }
+    maven {
+      name "ymdsnapshots"
+      url "s3://yourmd-artifacts/maven/snapshots"
+      credentials(AwsCredentials, setupAwsCredentials)
+    }
+  }
+
+  // create jar only if there is something to package
+  jar {
+    onlyIf { !sourceSets.main.allSource.files.isEmpty() }
+  }
+
+  // create sources jar
+  task sourcesJar(type: Jar, dependsOn: classes, overwrite: false) {
+    classifier = "sources"
+    from sourceSets.main.allSource
+  }
+
+  // create javadoc jar
+  task javadocJar(type: Jar, dependsOn: [classes,javadoc], overwrite: false) {
+    classifier = "javadoc"
+    from javadoc.destinationDir
+  }
+
+  createTask("awsCredentials") {
+    description "Displays AWS client credentials."
+    doLast {
+      def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
+      println("AWS accessKey: " + creds.accessKey)
+      println("AWS secretKey: " + creds.secretKey)
+    }
+  }
+
+  createTask("repositories") {
+    description "Displays all configured repositories."
+    doLast {
+      project.repositories.each {
+        printf("%-30s %s\n", it.name, it.url)
+      }
+    }
+  }
+
+  createTask("downloadDeps") {
+    description "Downloads all required dependencies."
+    doLast {
+      project.rootProject.allprojects.each { subProject ->
+        subProject.buildscript.configurations.each { configuration ->
+          if (isResolvableConfiguration(configuration)) {
+            println("$subProject -> $configuration")
+            configuration.resolve()
+          }
+        }
+        subProject.configurations.each { configuration ->
+          if (isResolvableConfiguration(configuration)) {
+            println("$subProject -> $configuration")
+            configuration.resolve()
+          }
+        }
+      }
+    }
+  }
+
+  createTask("lsPlugins") {
+    description "Displays enabled plugins."
+    doLast { project.plugins.each { println it.getClass().getSimpleName() }}
+  }
+
+  // compile groovy sources with invokedynamic support
+  tasks.withType(GroovyCompile) {
+    groovyOptions.optimizationOptions.indy = true
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+  }
+
+  tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+  }
+
+  publishing {
     repositories {
-        mavenLocal()
-        mavenCentral()
-        jcenter()
-        maven { url "http://maven.springframework.org/release" }
-        maven { url "http://repo.spring.io/plugins-release" }
-        maven { url "https://oss.sonatype.org/content/repositories/releases" }
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+      // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
+      add project.version.endsWith("-SNAPSHOT") ?
+          project.repositories.ymdsnapshots : project.repositories.ymdreleases
+    }
 
-        maven {
-            name "ymdreleases"
-            url "s3://yourmd-artifacts/maven/releases"
-            credentials(AwsCredentials, setupAwsCredentials)
+    publications {
+      main(MavenPublication) {
+        from components.java
+
+        if (tasks.findByName("sourcesJar")) {
+          artifact sourcesJar
         }
-        maven {
-            name "ymdsnapshots"
-            url "s3://yourmd-artifacts/maven/snapshots"
-            credentials(AwsCredentials, setupAwsCredentials)
+        if (tasks.findByName("javadocJar")) {
+          artifact javadocJar
         }
+      }
+    }
+  }
+
+  // managed dependencies.
+  dependencyManagement {
+    // import BOMs
+    imports {
+      mavenBom "io.projectreactor:reactor-bom:${reactorBomVersion}"
+      mavenBom "org.spockframework:spock-bom:${spockVersion}"
+      mavenBom "com.amazonaws:aws-java-sdk-bom:${awsSdkVersion}"
     }
 
-    // create jar only if there is something to package
-    jar {
-        onlyIf { !sourceSets.main.allSource.files.isEmpty() }
-    }
-
-    // create sources jar
-    task sourcesJar(type: Jar, dependsOn: classes, overwrite: false) {
-        classifier = "sources"
-        from sourceSets.main.allSource
-    }
-
-    // create javadoc jar
-    task javadocJar(type: Jar, dependsOn: [classes,javadoc], overwrite: false) {
-        classifier = "javadoc"
-        from javadoc.destinationDir
-    }
-
-    createTask("awsCredentials") {
-        description "Displays AWS client credentials."
-        doLast {
-            def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
-            println("AWS accessKey: " + creds.accessKey)
-            println("AWS secretKey: " + creds.secretKey)
-        }
-    }
-
-    createTask("repositories") {
-        description "Displays all configured repositories."
-        doLast {
-            project.repositories.each {
-                printf("%-30s %s\n", it.name, it.url)
-            }
-        }
-    }
-
-    createTask("downloadDeps") {
-        description "Downloads all required dependencies."
-        doLast {
-            project.rootProject.allprojects.each { subProject ->
-                subProject.buildscript.configurations.each { configuration ->
-                  if (isResolvableConfiguration(configuration)) {
-                    println("$subProject -> $configuration")
-                    configuration.resolve()
-                  }
-                }
-                subProject.configurations.each { configuration ->
-                  if (isResolvableConfiguration(configuration)) {
-                    println("$subProject -> $configuration")
-                    configuration.resolve()
-                  }
-                }
-            }
-        }
-    }
-
-    createTask("lsPlugins") {
-        description "Displays enabled plugins."
-        doLast { project.plugins.each { println it.getClass().getSimpleName() }}
-    }
-
-    // compile groovy sources with invokedynamic support
-    tasks.withType(GroovyCompile) {
-        groovyOptions.optimizationOptions.indy = true
-        options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
-    }
-
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
-    }
-
-    publishing {
-        repositories {
-            // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
-            add project.version.endsWith("-SNAPSHOT") ?
-                    project.repositories.ymdsnapshots : project.repositories.ymdreleases
-        }
-
-        publications {
-            main(MavenPublication) {
-                from components.java
-
-                if (tasks.findByName("sourcesJar")) {
-                    artifact sourcesJar
-                }
-                if (tasks.findByName("javadocJar")) {
-                    artifact javadocJar
-                }
-            }
-        }
-    }
-
-    // managed dependencies.
-    dependencyManagement {
-        // import BOMs
-        imports {
-          mavenBom "io.projectreactor:reactor-bom:${reactorBomVersion}"
-          mavenBom "org.spockframework:spock-bom:${spockVersion}"
-          mavenBom "com.amazonaws:aws-java-sdk-bom:${awsSdkVersion}"
-        }
-
-        dependencies {
-            // groovy: invoke dynamic version
-            dependency group: "org.codehaus.groovy", name: "groovy-all", version: "${groovyVersion}", classifier: "indy"
-
-            // logging
-            dependency "org.slf4j:slf4j-api:${slf4jVersion}"
-            dependency "org.slf4j:jcl-over-slf4j:${slf4jVersion}"
-            dependency "org.slf4j:log4j-over-slf4j:${slf4jVersion}"
-            dependency "org.slf4j:slf4j-jdk14:${slf4jVersion}"
-            dependency "org.slf4j:jul-to-slf4j:${slf4jVersion}"
-            dependency "org.slf4j:slf4j-log4j12:${slf4jVersion}"
-            dependency "org.slf4j:slf4j-simple:${slf4jVersion}"
-
-            dependency "ch.qos.logback:logback-access:${logbackVersion}"
-            dependency "ch.qos.logback:logback-classic:${logbackVersion}"
-
-            dependency "org.apache.logging.log4j:log4j-api:${log4j2Version}"
-            dependency "org.apache.logging.log4j:log4j-core:${log4j2Version}"
-            dependency "org.apache.logging.log4j:log4j-slf4j-impl:${log4j2Version}"
-
-            // misc
-            dependency "io.reactivex:rxjava:${rxjavaVersion}"
-            dependency "io.reactivex.rxjava2:rxjava:${rxjava2Version}"
-
-            // swagger/springfox
-            dependency "io.swagger:swagger-annotations:${swaggerVersion}"
-            dependency "io.springfox:springfox-swagger2:${springfoxVersion}"
-            dependency "io.springfox:springfox-swagger-ui:${springfoxVersion}"
-            dependency "io.springfox:springfox-staticdocs:${springfoxVersion}"
-            dependency "io.github.swagger2markup:swagger2markup-import-files-ext:1.0.0"
-            dependency "io.github.swagger2markup:swagger2markup-spring-restdocs-ext:1.0.0"
-            dependency "io.github.swagger2markup:swagger2markup-import-schemas-ext:1.0.0"
-
-            // testing
-            dependency "org.spockframework:spock-core:${spockVersion}"
-            dependency "org.spockframework:spock-spring:${spockVersion}"
-            dependency "org.spockframework:spock-specs:${spockVersion}"
-            dependency "org.spockframework:spock-guice:${spockVersion}"
-            dependency "org.spockframework:spock-tapestry:${spockVersion}"
-            dependency "org.spockframework:spock-unitils:${spockVersion}"
-            dependency "org.spockframework:spock-report:${spockVersion}"
-            dependency "org.assertj:assertj-core:${assertjVersion}"
-            dependency "cglib:cglib-nodep:${cglibVersion}"
-
-            // misc
-            dependency "org.projectlombok:lombok:${lombokVersion}"
-            dependency "com.bugsnag:bugsnag:${bugsnagVersion}"
-            dependency "javax.servlet:javax.servlet-api:${servletVersion}"
-            dependency "com.google.guava:guava:${guavaVersion}"
-        }
-    }
-
-    // dependencies for all projects
     dependencies {
-        testCompile "org.projectlombok:lombok"
-        testCompile "org.slf4j:slf4j-api"
-        testCompile "org.codehaus.groovy:groovy-all"
-        testCompile "org.spockframework:spock-core"
-        testCompile "org.assertj:assertj-core"
+      // groovy: invoke dynamic version
+      dependency group: "org.codehaus.groovy", name: "groovy-all", version: "${groovyVersion}", classifier: "indy"
+
+      // logging
+      dependency "org.slf4j:slf4j-api:${slf4jVersion}"
+      dependency "org.slf4j:jcl-over-slf4j:${slf4jVersion}"
+      dependency "org.slf4j:log4j-over-slf4j:${slf4jVersion}"
+      dependency "org.slf4j:slf4j-jdk14:${slf4jVersion}"
+      dependency "org.slf4j:jul-to-slf4j:${slf4jVersion}"
+      dependency "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+      dependency "org.slf4j:slf4j-simple:${slf4jVersion}"
+
+      dependency "ch.qos.logback:logback-access:${logbackVersion}"
+      dependency "ch.qos.logback:logback-classic:${logbackVersion}"
+
+      dependency "org.apache.logging.log4j:log4j-api:${log4j2Version}"
+      dependency "org.apache.logging.log4j:log4j-core:${log4j2Version}"
+      dependency "org.apache.logging.log4j:log4j-slf4j-impl:${log4j2Version}"
+
+      // misc
+      dependency "io.reactivex:rxjava:${rxjavaVersion}"
+      dependency "io.reactivex.rxjava2:rxjava:${rxjava2Version}"
+
+      // swagger/springfox
+      dependency "io.swagger:swagger-annotations:${swaggerVersion}"
+      dependency "io.springfox:springfox-swagger2:${springfoxVersion}"
+      dependency "io.springfox:springfox-swagger-ui:${springfoxVersion}"
+      dependency "io.springfox:springfox-staticdocs:${springfoxVersion}"
+      dependency "io.github.swagger2markup:swagger2markup-import-files-ext:1.0.0"
+      dependency "io.github.swagger2markup:swagger2markup-spring-restdocs-ext:1.0.0"
+      dependency "io.github.swagger2markup:swagger2markup-import-schemas-ext:1.0.0"
+
+      // testing
+      dependency "org.spockframework:spock-core:${spockVersion}"
+      dependency "org.spockframework:spock-spring:${spockVersion}"
+      dependency "org.spockframework:spock-specs:${spockVersion}"
+      dependency "org.spockframework:spock-guice:${spockVersion}"
+      dependency "org.spockframework:spock-tapestry:${spockVersion}"
+      dependency "org.spockframework:spock-unitils:${spockVersion}"
+      dependency "org.spockframework:spock-report:${spockVersion}"
+      dependency "org.assertj:assertj-core:${assertjVersion}"
+      dependency "cglib:cglib-nodep:${cglibVersion}"
+
+      // misc
+      dependency "org.projectlombok:lombok:${lombokVersion}"
+      dependency "com.bugsnag:bugsnag:${bugsnagVersion}"
+      dependency "javax.servlet:javax.servlet-api:${servletVersion}"
+      dependency "com.google.guava:guava:${guavaVersion}"
     }
+  }
+
+  // dependencies for all projects
+  dependencies {
+    testCompile "org.projectlombok:lombok"
+    testCompile "org.slf4j:slf4j-api"
+    testCompile "org.codehaus.groovy:groovy-all"
+    testCompile "org.spockframework:spock-core"
+    testCompile "org.assertj:assertj-core"
+  }
 }
 
 // release plugin configuration
 release {
-    failOnCommitNeeded = true
-    failOnPublishNeeded = true
-    failOnSnapshotDependencies = true
-    failOnUnversionedFiles = true
-    failOnUpdateNeeded = true
-    revertOnFail = true
-    preCommitText = ''
-    preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
-    tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
-    newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
-    tagTemplate = 'v${version}'
-    versionPropertyFile = 'gradle.properties'
-    versionProperties = []
-    buildTasks = ['build']
+  failOnCommitNeeded = true
+  failOnPublishNeeded = true
+  failOnSnapshotDependencies = true
+  failOnUnversionedFiles = true
+  failOnUpdateNeeded = true
+  revertOnFail = true
+  preCommitText = ''
+  preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
+  tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
+  newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
+  tagTemplate = 'v${version}'
+  versionPropertyFile = 'gradle.properties'
+  versionProperties = []
+  buildTasks = ['build']
 
-    git {
-        requireBranch = 'master'
-        pushToRemote = 'origin'
-        pushToBranchPrefix = ''
-    }
+  git {
+    requireBranch = 'master'
+    pushToRemote = 'origin'
+    pushToBranchPrefix = ''
+  }
 }
 
 /**
@@ -328,20 +328,20 @@ release {
  * </p>
  */
 ext.getCleanEnvironment = { it ->
-    def res = [:]
-    logger.info("Removing malformed environment variables from environment")
-    System.getenv().forEach({ key, val ->
-      if (key != null && val != null && !val.isEmpty() && !val.contains('$')) {
-          res[key] = val
-      }
-    })
-
-    if (logger.isInfoEnabled()) {
-      logger.info("Returning clean evironment: ")
-      res.each { logger.info(String.format(" %-30s %s", it.key, it.value)) }
+  def res = [:]
+  logger.info("Removing malformed environment variables from environment")
+  System.getenv().forEach({ key, val ->
+    if (key != null && val != null && !val.isEmpty() && !val.contains('$')) {
+      res[key] = val
     }
+  })
 
-    res
+  if (logger.isInfoEnabled()) {
+    logger.info("Returning clean evironment: ")
+    res.each { logger.info(String.format(" %-30s %s", it.key, it.value)) }
+  }
+
+  res
 }
 if (project.tasks.test) {
   project.tasks.test.environment = getCleanEnvironment()
@@ -356,8 +356,8 @@ if (project.tasks.test) {
  * @throws GradleScriptException in case of bad input
  */
 ext.makeDeployArtifact = { ->
-    copyFile("${project.buildDir}/libs/${project.name}-${version}.jar",
-             "${project.buildDir}/libs/${project.name}.jar")
+  copyFile("${project.buildDir}/libs/${project.name}-${version}.jar",
+       "${project.buildDir}/libs/${project.name}.jar")
 }
 
 /**
@@ -370,23 +370,23 @@ ext.makeDeployArtifact = { ->
  * @throws GradleScriptException in case of bad input
  */
 ext.copyFile = { src, dst ->
-    def srcPath = Paths.get(src)
-    if (!(Files.exists(srcPath) && Files.isRegularFile(srcPath))) {
-        throw new GradleScriptException("Source file doesn't exist or is not a plain file: $srcPath", null)
-    }
+  def srcPath = Paths.get(src)
+  if (!(Files.exists(srcPath) && Files.isRegularFile(srcPath))) {
+    throw new GradleScriptException("Source file doesn't exist or is not a plain file: $srcPath", null)
+  }
 
-    def parent = Paths.get(dst).getParent()
-    if (!Files.isDirectory(parent)) {
-      logger.warn("Creating directory: '{}'", parent)
-      Files.createDirectories(parent)
-    }
+  def parent = Paths.get(dst).getParent()
+  if (!Files.isDirectory(parent)) {
+    logger.warn("Creating directory: '{}'", parent)
+    Files.createDirectories(parent)
+  }
 
-    // copy the file
-    def dstPath = Paths.get(dst)
-    logger.warn("Copying '{}' => '{}'", srcPath, dstPath)
-    Files.copy(srcPath, dstPath, StandardCopyOption.REPLACE_EXISTING)
+  // copy the file
+  def dstPath = Paths.get(dst)
+  logger.warn("Copying '{}' => '{}'", srcPath, dstPath)
+  Files.copy(srcPath, dstPath, StandardCopyOption.REPLACE_EXISTING)
 
-    1
+  1
 }
 
 /**
@@ -399,12 +399,12 @@ ext.copyFile = { src, dst ->
  * @throws GradleScriptException in case of bad input
  */
 ext.copyFiles = { dstDir, srcFiles ->
-    int num = 0
-    srcFiles.each { file ->
-        def basename = Paths.get(file).getFileName()
-        num += copyFile(file, "${dstDir}/${basename}")
-    }
-    num
+  int num = 0
+  srcFiles.each { file ->
+    def basename = Paths.get(file).getFileName()
+    num += copyFile(file, "${dstDir}/${basename}")
+  }
+  num
 }
 
 // vim:shiftwidth=2 softtabstop=2 expandtab

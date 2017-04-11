@@ -16,76 +16,76 @@ buildscript {
   }
 }
 
-apply plugin: 'java'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-apply plugin: 'net.researchgate.release'
+apply plugin: "java"
+apply plugin: "idea"
+apply plugin: "eclipse"
+apply plugin: "maven"
+apply plugin: "maven-publish"
+apply plugin: "signing"
+apply plugin: "net.researchgate.release"
 
 repositories {
-    mavenLocal()
-    mavenCentral()
-    jcenter()
+  mavenLocal()
+  mavenCentral()
+  jcenter()
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+  classifier = "sources"
+  from sourceSets.main.allSource
 }
 
 artifacts {
-    //archives javadocJar, sourcesJar
-    archives sourcesJar
+  //archives javadocJar, sourcesJar
+  archives sourcesJar
 }
 
 signing {
-    sign configurations.archives
+  sign configurations.archives
 }
 
 uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+  repositories {
+    mavenDeployer {
+      beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
+      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+        authentication(userName: ossrhUsername, password: ossrhPassword)
+      }
 
-            pom.project {
-                name "Example Application"
-                packaging "jar"
-                description "YourMD common gradle settings"
-                url "https://github.com/YourMD/yourmd-gradle-scripts"
+      pom.project {
+        name "Common gradle settings"
+        packaging "jar"
+        description "YourMD common gradle settings"
+        url "https://github.com/YourMD/yourmd-gradle-scripts"
 
-                scm {
-                    connection "scm:git:https://github.com/YourMD/yourmd-gradle-scripts.git"
-                    developerConnection "scm:git:https://github.com/YourMD/yourmd-gradle-scripts.git"
-                    url "https://github.com/YourMD/yourmd-gradle-scripts"
-                }
-
-                licenses {
-                    license {
-                        name "The Apache License, Version 2.0"
-                        url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                    }
-                }
-
-                developers {
-                    developer {
-                        id "yourmd"
-                        name "YourMD"
-                        email "info@your.md"
-                    }
-                }
-            }
+        scm {
+          connection "scm:git:https://github.com/YourMD/yourmd-gradle-scripts.git"
+          developerConnection "scm:git:https://github.com/YourMD/yourmd-gradle-scripts.git"
+          url "https://github.com/YourMD/yourmd-gradle-scripts"
         }
+
+        licenses {
+          license {
+            name "The Apache License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        }
+
+        developers {
+          developer {
+            id "yourmd"
+            name "YourMD"
+            email "info@your.md"
+          }
+        }
+      }
     }
+  }
 }
 
 // release plugin configuration
@@ -113,4 +113,5 @@ release {
 }
 
 
+// vim:shiftwidth=2 softtabstop=2 expandtab
 // EOF

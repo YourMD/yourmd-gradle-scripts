@@ -8,7 +8,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 buildscript {
   ext {
     // gradle
-    gradleReleasePluginVersion          = "2.4.0"
+    gradleReleasePluginVersion          = "2.6.0"
     gradleDependencyMananagementVersion = "0.6.1.RELEASE"
 
     // groovy

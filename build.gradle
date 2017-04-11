@@ -4,7 +4,7 @@
 
 buildscript {
   ext {
-    gradleReleasePluginVersion = "2.4.0"
+    gradleReleasePluginVersion = "2.6.0"
   }
   repositories {
     mavenLocal()

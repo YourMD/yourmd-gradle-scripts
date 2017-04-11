@@ -6,55 +6,68 @@ import java.nio.file.*;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 
 buildscript {
-    ext {
-        // gradle
-        gradleVersion = "3.1"
-        gradleReleasePluginVersion = "2.4.0"
-        gradleDependencyMananagementVersion = "0.6.1.RELEASE"
+  ext {
+    // gradle
+    gradleReleasePluginVersion          = "2.4.0"
+    gradleDependencyMananagementVersion = "0.6.1.RELEASE"
 
-        // groovy
-        groovyVersion = "2.4.7"
+    // groovy
+    groovyVersion           = "2.4.10"
 
-        // logging
-        slf4jVersion = "1.7.21"
-        logbackVersion = "1.1.7"
-        log4j2Version = "2.6.2"
+    // logging
+    slf4jVersion            = "1.7.25"
+    logbackVersion          = "1.2.3"
+    log4j2Version           = "2.8.1"
 
-        // testing
-        assertjVersion = "3.5.2"
-        spockVersion = "1.0-groovy-2.4"
-        cglibVersion = "3.2.4"
+    // testing
+    assertjVersion          = "3.6.2"
+    spockVersion            = "1.1-groovy-2.4-rc-4"
+    cglibVersion            = "3.2.4"
 
-        // misc
-        lombokVersion = "1.16.10"
-        servletVersion = "3.1.0"
-        bugsnagVersion = "2.0.0"
-        rxjavaVersion  = "1.2.1"
-        guavaVersion   = "19.0"
+    // misc
+    lombokVersion           = "1.16.16"
+    servletVersion          = "3.1.0"
+    bugsnagVersion          = "2.0.0"
+    rxjavaVersion           = "1.2.9"
+    rxjava2Version          = "2.0.8"
+    reactorBomVersion       = "Aluminium-SR2"
+    guavaVersion            = "21.0"
 
-        // swagger/springfox
-        swaggerVersion = "1.5.10"
-        springfoxVersion = "2.5.0"
+    // swagger/springfox
+    swaggerVersion          = "1.5.10"
+    springfoxVersion        = "2.6.1"
 
-        // spring
-        springBootVersion = "1.4.1.RELEASE"
+    // spring
+    springBootVersion       = "1.4.5.RELEASE"
 
-        // AWS
-        awsSdkVersion = "1.10.76"
-    }
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        jcenter()
-        maven { url 'http://maven.springframework.org/release' }
-        maven { url 'http://repo.spring.io/plugins-release' }
-    }
-    dependencies {
-        classpath "com.amazonaws:aws-java-sdk:${awsSdkVersion}"
-        classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
-        classpath "io.spring.gradle:dependency-management-plugin:${gradleDependencyMananagementVersion}"
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-    }
+    // AWS
+    awsSdkVersion           = "1.11.118"
+  }
+  repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven { url "http://maven.springframework.org/release" }
+    maven { url "http://repo.spring.io/plugins-release" }
+  }
+  dependencies {
+    classpath "com.amazonaws:aws-java-sdk-core:${awsSdkVersion}"
+    classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
+    classpath "io.spring.gradle:dependency-management-plugin:${gradleDependencyMananagementVersion}"
+  }
+}
+
+boolean isResolvableConfiguration(cfg) {
+  if (!cfg) return false
+
+  // gradle >= 3.4 contains this.
+  try {
+    return cfg.isCanBeResolved()
+  } catch (Exception e) {
+    // doesn't matter, we're probably running on gradle version < 3.4
+    // where all configurations are resolvable
+  }
+  true
 }
 
 def setupAwsCredentials = {
@@ -102,19 +115,19 @@ allprojects {
         mavenLocal()
         mavenCentral()
         jcenter()
-        maven { url 'http://maven.springframework.org/release' }
-        maven { url 'http://repo.spring.io/plugins-release' }
+        maven { url "http://maven.springframework.org/release" }
+        maven { url "http://repo.spring.io/plugins-release" }
         maven { url "https://oss.sonatype.org/content/repositories/releases" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 
         maven {
             name "ymdreleases"
-            url 's3://yourmd-artifacts/maven/releases'
+            url "s3://yourmd-artifacts/maven/releases"
             credentials(AwsCredentials, setupAwsCredentials)
         }
         maven {
             name "ymdsnapshots"
-            url 's3://yourmd-artifacts/maven/snapshots'
+            url "s3://yourmd-artifacts/maven/snapshots"
             credentials(AwsCredentials, setupAwsCredentials)
         }
     }
@@ -159,12 +172,16 @@ allprojects {
         doLast {
             project.rootProject.allprojects.each { subProject ->
                 subProject.buildscript.configurations.each { configuration ->
+                  if (isResolvableConfiguration(configuration)) {
                     println("$subProject -> $configuration")
                     configuration.resolve()
+                  }
                 }
                 subProject.configurations.each { configuration ->
+                  if (isResolvableConfiguration(configuration)) {
                     println("$subProject -> $configuration")
                     configuration.resolve()
+                  }
                 }
             }
         }
@@ -175,22 +192,20 @@ allprojects {
         doLast { project.plugins.each { println it.getClass().getSimpleName() }}
     }
 
-    /*
-    createTask("createDistJar") {
-      description "Create distribution artifact without version number in the name."
-      doLast { makeDeployArtifact() }
-    }
-    */
-
     // compile groovy sources with invokedynamic support
     tasks.withType(GroovyCompile) {
         groovyOptions.optimizationOptions.indy = true
+        options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
     }
 
     publishing {
         repositories {
             // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
-            add project.version.endsWith('-SNAPSHOT') ?
+            add project.version.endsWith("-SNAPSHOT") ?
                     project.repositories.ymdsnapshots : project.repositories.ymdreleases
         }
 
@@ -210,6 +225,13 @@ allprojects {
 
     // managed dependencies.
     dependencyManagement {
+        // import BOMs
+        imports {
+          mavenBom "io.projectreactor:reactor-bom:${reactorBomVersion}"
+          mavenBom "org.spockframework:spock-bom:${spockVersion}"
+          mavenBom "com.amazonaws:aws-java-sdk-bom:${awsSdkVersion}"
+        }
+
         dependencies {
             // groovy: invoke dynamic version
             dependency group: "org.codehaus.groovy", name: "groovy-all", version: "${groovyVersion}", classifier: "indy"
@@ -232,6 +254,7 @@ allprojects {
 
             // misc
             dependency "io.reactivex:rxjava:${rxjavaVersion}"
+            dependency "io.reactivex.rxjava2:rxjava:${rxjava2Version}"
 
             // swagger/springfox
             dependency "io.swagger:swagger-annotations:${swaggerVersion}"
@@ -245,6 +268,11 @@ allprojects {
             // testing
             dependency "org.spockframework:spock-core:${spockVersion}"
             dependency "org.spockframework:spock-spring:${spockVersion}"
+            dependency "org.spockframework:spock-specs:${spockVersion}"
+            dependency "org.spockframework:spock-guice:${spockVersion}"
+            dependency "org.spockframework:spock-tapestry:${spockVersion}"
+            dependency "org.spockframework:spock-unitils:${spockVersion}"
+            dependency "org.spockframework:spock-report:${spockVersion}"
             dependency "org.assertj:assertj-core:${assertjVersion}"
             dependency "cglib:cglib-nodep:${cglibVersion}"
 
@@ -258,6 +286,7 @@ allprojects {
 
     // dependencies for all projects
     dependencies {
+        testCompile "org.projectlombok:lombok"
         testCompile "org.slf4j:slf4j-api"
         testCompile "org.codehaus.groovy:groovy-all"
         testCompile "org.spockframework:spock-core"
@@ -287,11 +316,6 @@ release {
         pushToRemote = 'origin'
         pushToBranchPrefix = ''
     }
-}
-
-createTask("wrapper", Wrapper) {
-    description "Sets up gradle wrapper [v${gradleVersion}]"
-    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
 
 /**
@@ -383,4 +407,5 @@ ext.copyFiles = { dstDir, srcFiles ->
     num
 }
 
+// vim:shiftwidth=2 softtabstop=2 expandtab
 // EOF

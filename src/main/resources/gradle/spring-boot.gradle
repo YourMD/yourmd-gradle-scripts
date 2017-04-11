@@ -2,20 +2,6 @@
 // build.gradle
 //
 
-buildscript {
-    ext {
-        springBootVersion = "1.4.1.RELEASE"
-    }
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        jcenter()
-    }
-    dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
-    }
-}
-
 allprojects {
     apply plugin: "java"
     apply plugin: "groovy"
@@ -28,4 +14,5 @@ allprojects {
     }
 }
 
+// vim:shiftwidth=2 softtabstop=2 expandtab
 // EOF

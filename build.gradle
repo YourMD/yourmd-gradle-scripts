@@ -112,6 +112,12 @@ release {
   }
 }
 
+// reproducible archives support
+// https://docs.gradle.org/3.5/userguide/working_with_files.html#sec:reproducible_archives
+tasks.withType(AbstractArchiveTask) {
+  preserveFileTimestamps  = false
+  reproducibleFileOrder   = true
+}
 
 // vim:shiftwidth=2 softtabstop=2 expandtab
 // EOF

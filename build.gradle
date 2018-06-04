@@ -4,7 +4,7 @@
 
 buildscript {
   ext {
-    gradleReleasePluginVersion = "2.6.0"
+    gradleReleasePluginVersion = "2.7.0"
   }
   repositories {
     mavenLocal()
@@ -36,7 +36,6 @@ task sourcesJar(type: Jar) {
 }
 
 artifacts {
-  //archives javadocJar, sourcesJar
   archives sourcesJar
 }
 
@@ -90,26 +89,7 @@ uploadArchives {
 
 // release plugin configuration
 release {
-  failOnCommitNeeded = true
-  failOnPublishNeeded = true
-  failOnSnapshotDependencies = true
-  failOnUnversionedFiles = true
-  failOnUpdateNeeded = true
-  revertOnFail = true
-  preCommitText = ""
-  preTagCommitMessage = "[Gradle Release Plugin] - pre tag commit: "
-  tagCommitMessage = "[Gradle Release Plugin] - creating tag: "
-  newVersionCommitMessage = "[Gradle Release Plugin] - new version commit: "
   tagTemplate = 'v${version}'
-  versionPropertyFile = "gradle.properties"
-  versionProperties = []
-  buildTasks = ["build"]
-
-  git {
-    requireBranch = "master"
-    pushToRemote = "origin"
-    pushToBranchPrefix = ""
-  }
 }
 
 // reproducible archives support

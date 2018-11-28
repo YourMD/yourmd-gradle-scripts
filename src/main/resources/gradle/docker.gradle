@@ -1,0 +1,161 @@
+//
+// docker.gradle
+//
+
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+private void checkPrerequisites() {
+  checkIfRequiredPluginsAreApplied()
+}
+
+def checkIfRequiredPluginsAreApplied() {
+  requireAppliedPlugin("com.palantir.git-version", "0.12.0-rc2")
+  requireAppliedPlugin("com.palantir.docker", "0.20.1")
+}
+
+private ZonedDateTime lastCommitDate(def git) {
+  def timeSeconds = (long) git.log().call().next().getCommitTime()
+  def instant = Instant.ofEpochMilli(timeSeconds * 1000)
+  def zoneId = ZoneOffset.UTC
+  ZonedDateTime.ofInstant(instant, zoneId)
+}
+
+/**
+ * Returns list of <b>additional</b> tags that created docker image should be tagged with.<p/>
+ *
+ * This method reads the following optional {@code ext} values:
+ *
+ * <ul>
+ *     <li><code>dockerTagUseDate</code> (boolean, default: <code>true</code>): try to extract last commit date from git
+ *     repository</li>
+ *     <li><code>dockerTagUseDate</code> (string, default: <code>yyyy-MM-dd-hh-mm-SS</code>: docker tag date format</li>
+ *     <li><code>dockerTagBranches</code> (string list, default: <code>["master", "dev" ]</code>: list of allowed
+ *     branches for which special docker tags will be created</li>
+ * </ul>
+ *
+ * @return list of tags that can be used in {@code docker.tags} property
+ * @see <a href="https://github.com/palantir/gradle-docker#docker-plugin">gradle-palantir-docker plugin docs</a>
+ */
+private List<String> dockerImageTags() {
+  println("running in: ${rootProject.name} -> ${project.name}")
+  //new RuntimeException("stack").printStackTrace()
+  checkPrerequisites()
+
+  def gitInfo = versionDetails()
+  if (!gitInfo) {
+    return []
+  }
+
+  // default values
+  def defaultUseDate = true
+  def defaultDateFormat = "yyyy-MM-dd-hh-mm-ss"
+  def defaultAllowedBranches = [ "master", "dev" ]
+
+
+  // decide whether last commit date extraction is going to take place
+  def extractDate = ext.has('dockerTagUseDate') ? ext.dockerTagUseDate : defaultUseDate
+  def dateFormat = ext.has('dockerTagDateFormat') ? ext.dockerTagDateFormat : defaultDateFormat
+
+  // if branch name is not null or empty and we're not working on a tag,
+  // we add a "latest" tag to final result
+  def branchName = gitInfo?.getBranchName() ?: ""
+  branchName = branchName.replaceAll('[^\\w\\-\\.]+', '-')
+                         .replaceAll('\\-{2,}', '-')
+                         .trim()
+                         .toLowerCase()
+                         ?: ""
+
+  // tag name if we're on a tag
+  def tagName = gitInfo.isCleanTag ? gitInfo.version : ""
+
+  logger.info("working on a git branch: '{}', tag: '{}'", branchName, tagName)
+
+  // use git hashes for additional tags by default
+  def result = [ gitInfo.gitHash, gitInfo.gitHashFull ]
+
+  // git branch?
+  if (branchName) {
+    def allowedBranches = ext.has("dockerTagAllowedBranches") ? ext.dockerTagAllowedBranches : defaultAllowedBranches
+    if (!allowedBranches) {
+      allowedBranches = defaultAllowedBranches
+    }
+
+    logger.info("docker tag allowed branches: {}", allowedBranches)
+    if (allowedBranches.contains(branchName)) {
+      // add branch
+      result += ["branch-" + branchName]
+
+      if (extractDate && gitInfo.git) {
+        def lastCommitDate = lastCommitDate(gitInfo.git)
+        logger.info("last commit date: {}", lastCommitDate)
+        def formatter = DateTimeFormatter.ofPattern(dateFormat)
+        logger.debug("created date formatter: {}", formatter)
+        def formattedDate = formatter.format(lastCommitDate)
+        logger.info("formatted last commit date: {}", formattedDate)
+        result += [ "branch-" + branchName + "-" + formattedDate]
+      }
+    }
+  }
+
+  // git tag?
+  if (tagName) {
+    result += [ tagName ]
+  }
+
+  // CI systems
+  if (System.getenv("CI") == "true") {
+    // CircleCI
+    def value = System.getenv("CIRCLE_BUILD_NUM")
+    if (value) {
+      result += ["circleci-" + value]
+    }
+
+    // Travis
+    value = System.getenv("TRAVIS_BUILD_NUMBER")
+    if (value) {
+      result += ["travis-" + value]
+    }
+  }
+
+  logger.info("docker image additional tags: {}", result)
+  result
+}
+
+ext.dockerAdditionalTags = {
+  dockerImageTags().toArray(new String[0])
+}
+
+task dockerPushAll {
+  group = "Docker"
+  description = "Pushes docker image with ALL configured tasks to configured docker registry."
+  dependsOn = [ 'docker', 'dockerTag' ]
+
+  doLast {
+    def pushTasks = project.tasks
+                           .findAll({ it.name.startsWith('dockerPush') && it.name != name })
+                           .findAll({ it.enabled })
+                           .sort({ a, b -> a.name <=> b.name })
+
+    pushTasks.each { task ->
+      def action = task.getActions().first()
+      logger.info("  pushing tag: {}", task.name)
+      action.execute(task)
+    }
+  }
+}
+
+task dockerInfo {
+  group = "Docker"
+  description = "Displays docker image name and any additional tags."
+  doLast {
+    println("image: " + docker.name)
+    def tags = docker.tags ? docker.tags : []
+    println("tags:  " + tags.join(", "))
+  }
+}
+
+// vim:shiftwidth=2 softtabstop=2 expandtab
+// EOF

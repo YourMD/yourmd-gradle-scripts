@@ -9,7 +9,7 @@ buildscript {
   ext {
     // gradle
     gradleReleasePluginVersion          = "2.7.0"
-    gradleDependencyMananagementVersion = "1.0.5.RELEASE"
+    gradleDependencyMananagementVersion = "1.0.6.RELEASE"
 
     // AWS
     awsSdkVersion                       = "1.11.340"
@@ -79,6 +79,48 @@ def createTask(String name, Class<?> type = null, Closure closure) {
   }
 }
 
+/**
+ * Tells whether plugin is applied.
+ * @param pluginId gradle plugin id
+ * @return true if applied, otherwise false
+ */
+ext.isPluginApplied = { String pluginId ->
+  project.getPluginManager().hasPlugin(pluginId)
+}
+
+/**
+ * Fails gradle build unless specified plugin is not applied
+ *
+ * @param pluginId gradle pluginId
+ * @param version plugin version, used only in final error message, optional
+ */
+ext.requireAppliedPlugin = { String pluginId, String version ->
+  if (!version) version = "1.0.0"
+  if (!isPluginApplied(pluginId)) {
+    // weird workaround for palantir docker plugin that wants to configure itself in root project
+    // as well, even if it's not applied there
+    if (rootProject == project && allprojects.size() > 1) {
+      logger.info("[no applied plugin: $pluginId] tolerating because root project is the same as current project.")
+      return
+    }
+
+    throw new GradleException(
+      "[project: ${rootProject.name} -> ${project.name}] required gradle plugin ${pluginId} is not applied.\n\n" +
+      "Please add the following to build.gradle plugins {} block: id \"${pluginId}\" version \"${version}\"")
+  }
+}
+
+def configureOptionalPlugin(String pluginId, Closure closure) {
+  if (isPluginApplied(pluginId)) {
+    apply plugin: "${pluginId}"
+    closure.call()
+  }
+}
+
+
+// dependency-management plugin is a must, build will fail if plugin is not applied
+requireAppliedPlugin("io.spring.dependency-management", "1.0.6.RELEASE")
+
 apply plugin: "java"
 apply plugin: "groovy"
 apply plugin: "idea"
@@ -86,40 +128,38 @@ apply plugin: "eclipse"
 apply plugin: "maven"
 apply plugin: "maven-publish"
 apply plugin: "io.spring.dependency-management"
-apply plugin: "net.researchgate.release"
-apply plugin: "com.orctom.applyscript"
 
 ///////////////////////////////////////////////////////////
 //                     EXT VARIABLES                     //
 ///////////////////////////////////////////////////////////
 
 // groovy
-setExtVar("groovyVersion","2.4.15")
+setExtVar("groovyVersion",      "2.4.15")
 
 // logging
-setExtVar("slf4jVersion","1.7.25")
-setExtVar("logbackVersion","1.2.3")
+setExtVar("slf4jVersion",       "1.7.25")
+setExtVar("logbackVersion",     "1.2.3")
 
 // testing
-setExtVar("assertjVersion","3.10.0")
-setExtVar("spockVersion","1.1-groovy-2.4")
-setExtVar("cglibVersion","3.2.6")
+setExtVar("assertjVersion",     "3.10.0")
+setExtVar("spockVersion",       "1.2-groovy-2.4")
+setExtVar("cglibVersion",       "3.2.6")
 
 // misc
-setExtVar("lombokVersion","1.18.0")
-setExtVar("servletVersion","3.1.0")
-setExtVar("bugsnagVersion","2.0.0")
-setExtVar("rxjavaVersion","1.3.8")
-setExtVar("rxjava2Version","2.1.14")
-setExtVar("guavaVersion","25.1-jre")
+setExtVar("lombokVersion",      "1.18.4")
+setExtVar("servletVersion",     "3.1.0")
+setExtVar("bugsnagVersion",     "2.0.0")
+setExtVar("rxjavaVersion",      "1.3.8")
+setExtVar("rxjava2Version",     "2.2.4")
+setExtVar("guavaVersion",       "27.0-jre")
 
 // swagger/springfox
-setExtVar("swaggerVersion","1.5.10")
-setExtVar("springfoxVersion","2.6.1")
+setExtVar("swaggerVersion",     "1.5.10")
+setExtVar("springfoxVersion",   "2.6.1")
 
 // java compiler
-setExtVar("javaSourceVersion","1.8")
-setExtVar("javaTargetVersion","1.8")
+setExtVar("javaSourceVersion",  "1.8")
+setExtVar("javaTargetVersion",  "1.8")
 
 ///////////////////////////////////////////////////////////
 
@@ -130,9 +170,7 @@ allprojects {
   apply plugin: "eclipse"
   apply plugin: "maven"
   apply plugin: "maven-publish"
-
   apply plugin: "io.spring.dependency-management"
-  apply plugin: "com.orctom.applyscript"
 
   repositories {
     mavenLocal()
@@ -228,6 +266,7 @@ allprojects {
   }
 
   tasks.withType(JavaCompile) {
+    options.incremental = true
     options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
   }
 
@@ -333,19 +372,62 @@ allprojects {
 
   // dependencies for all projects
   dependencies {
-    annotationProcessor "org.projectlombok:lombok"
-    compileOnly         "org.projectlombok:lombok"
+    annotationProcessor     "org.projectlombok:lombok"
+    compileOnly             "org.projectlombok:lombok"
 
-    testCompile "org.slf4j:slf4j-api"
-    testCompile "org.codehaus.groovy:groovy-all"
-    testCompile "org.spockframework:spock-core"
-    testCompile "org.assertj:assertj-core"
+    testAnnotationProcessor "org.projectlombok:lombok"
+    testCompile             "org.slf4j:slf4j-api"
+    testCompile             "org.codehaus.groovy:groovy-all"
+    testCompile             "org.spockframework:spock-core"
+    testCompile             "org.assertj:assertj-core"
   }
-}
 
-// release plugin configuration
-release {
-  tagTemplate = 'v${version}'
+  // tests
+  test {
+    systemProperties  System.getProperties()
+    jvmArgs           '-noverify', '-XX:TieredStopAtLevel=1'
+  }
+
+  // test-logger plugin default configuration
+  if (isPluginApplied("com.adarshr.test-logger")) {
+    logger.info("[${project.name}] applying test-logger plugin default config")
+
+    apply plugin: "com.adarshr.test-logger" // otherwise config below cannot is not applied
+    testlogger {
+      theme         "mocha"
+      slowThreshold 5000
+    }
+  }
+
+  // release plugin default configuration
+  if (isPluginApplied("net.researchgate.release")) {
+    logger.info("[${project.name}] applying release plugin default config")
+
+    apply plugin: "net.researchgate.release" // otherwise config below cannot is not applied
+    release {
+      tagTemplate = 'v${version}'
+    }
+  }
+
+  // gradle-git-properties default configuration
+  if(isPluginApplied("com.gorylenko.gradle-git-properties")) {
+    logger.info("[${project.name}] applying gradle-git-properties plugin default config")
+
+    apply plugin: "com.gorylenko.gradle-git-properties" // otherwise config below cannot be applied
+    gitProperties {
+      dateFormat          = "yyyy-MM-dd' 'HH:mm:ssZ"
+      dateFormatTimeZone  = "UTC"
+      gitPropertiesDir    = "${project.buildDir}/resources/main"
+
+      keys                = [ 'git.build.version', 'git.commit.id', 'git.commit.id.abbrev','git.commit.time' ]
+    }
+  }
+
+  // groovy.version
+  if (groovyVersion) {
+    logger.info("[${project.name}] setting groovy.version ext property to: $groovyVersion")
+    ext['groovy.version'] = "${groovyVersion}"
+  }
 }
 
 /**

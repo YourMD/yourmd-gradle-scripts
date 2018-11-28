@@ -1,3 +1,1 @@
 rootProject.name = 'common-settings'
-
-enableFeaturePreview('STABLE_PUBLISHING')

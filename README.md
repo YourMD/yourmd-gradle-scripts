@@ -8,9 +8,7 @@ in real-projects to reduce build boilerplate.
 | script | description |
 |---|---|
 |[*/gradle/common.gradle*](src/main/resources/gradle/common.gradle)|common build.gradle settings, **required**|
-|[*/gradle/jackson.gradle*](src/main/resources/gradle/jackson.gradle)|jackson dependency management|
-|[*/gradle/spring-boot.gradle*](src/main/resources/gradle/spring.gradle)|spring dependency management|
-|[*/gradle/spring-boot.gradle*](src/main/resources/gradle/spring-boot.gradle)|spring-boot dependency management|
+|[*/gradle/docker.gradle*](src/main/resources/gradle/docker.gradle)|docker image tagging support|
 
 See [src/main/resources/gradle](src/main/resources/gradle) directory for details.
 
@@ -30,29 +28,24 @@ Clone this project and install artifact jar into local maven repository:
 //
 
 buildscript {
-    ext {
-       ymdGradleSettingsVersion = "0.0.20" // make sure to use latest version
+    // required to apply gradle snippets stored in md.your.gradle:common-settings jar
+    repositories {
+      mavenLocal()
+      mavenCentral()
+    }
+    dependencies {
+      classpath "md.your.gradle:common-settings:<version>"
     }
 }
 
 plugins {
-    id "com.orctom.applyscript" version "1.1"  // implements applyscript (required)
     id "net.researchgate.release" version  "2.4.0" // gradle release plugin (required)
     id "io.spring.dependency-management" version  "0.6.1.RELEASE" // dependency management plugin (required)
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
 
-dependencies {
-    // jar artifacts with shared gradle scripts
-    scripts "md.your.gradle:common-settings:${ymdGradleSettingsVersion}"
-}
-
-// apply scripts from jar
-applyscript "common-settings-${ymdGradleSettingsVersion}/gradle/common.gradle"
+// apply default settings from jar
+apply from: getClass().getResource("/gradle/common.gradle")
 
 // DONE!
 //

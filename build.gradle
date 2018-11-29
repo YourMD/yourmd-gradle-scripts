@@ -2,18 +2,8 @@
 // build.gradle
 //
 
-buildscript {
-  ext {
-    gradleReleasePluginVersion = "2.7.0"
-  }
-  repositories {
-    mavenLocal()
-    mavenCentral()
-    jcenter()
-  }
-  dependencies {
-    classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
-  }
+plugins {
+  id "net.researchgate.release"         version "2.7.0"
 }
 
 apply plugin: "java"
@@ -22,7 +12,6 @@ apply plugin: "eclipse"
 apply plugin: "maven"
 apply plugin: "maven-publish"
 apply plugin: "signing"
-apply plugin: "net.researchgate.release"
 
 repositories {
   mavenLocal()

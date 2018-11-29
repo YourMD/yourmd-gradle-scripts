@@ -410,7 +410,7 @@ allprojects {
   }
 
   // gradle-git-properties default configuration
-  if(isPluginApplied("com.gorylenko.gradle-git-properties")) {
+  if (isPluginApplied("com.gorylenko.gradle-git-properties")) {
     logger.info("[${project.name}] applying gradle-git-properties plugin default config")
 
     apply plugin: "com.gorylenko.gradle-git-properties" // otherwise config below cannot be applied

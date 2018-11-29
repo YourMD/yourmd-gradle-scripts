@@ -40,8 +40,7 @@ private ZonedDateTime lastCommitDate(def git) {
  * @see <a href="https://github.com/palantir/gradle-docker#docker-plugin">gradle-palantir-docker plugin docs</a>
  */
 private List<String> dockerImageTags() {
-  println("running in: ${rootProject.name} -> ${project.name}")
-  //new RuntimeException("stack").printStackTrace()
+  logger.info("dockerImageTags(): running in: ${rootProject.name} -> ${project.name}")
   checkPrerequisites()
 
   def gitInfo = versionDetails()

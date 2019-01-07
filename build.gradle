@@ -3,15 +3,16 @@
 //
 
 plugins {
-  id "net.researchgate.release"         version "2.7.0"
-}
+  id "java"
+  id "maven"
+  id "maven-publish"
+  id "signing"
 
-apply plugin: "java"
-apply plugin: "idea"
-apply plugin: "eclipse"
-apply plugin: "maven"
-apply plugin: "maven-publish"
-apply plugin: "signing"
+  id "idea"
+  id "eclipse"
+
+  id "net.researchgate.release"         version "2.8.0"
+}
 
 repositories {
   mavenLocal()

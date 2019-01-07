@@ -12,7 +12,7 @@ buildscript {
     gradleDependencyMananagementVersion = "1.0.6.RELEASE"
 
     // AWS
-    awsSdkVersion                       = "1.11.340"
+    awsSdkVersion                       = "1.11.478"
   }
   repositories {
     mavenLocal()
@@ -23,6 +23,7 @@ buildscript {
   }
   dependencies {
     classpath "com.amazonaws:aws-java-sdk-core:${awsSdkVersion}"
+    classpath "com.amazonaws:aws-java-sdk-sts:${awsSdkVersion}"
     classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
     classpath "io.spring.gradle:dependency-management-plugin:${gradleDependencyMananagementVersion}"
   }

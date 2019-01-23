@@ -24,8 +24,6 @@ buildscript {
   dependencies {
     classpath "com.amazonaws:aws-java-sdk-core:${awsSdkVersion}"
     classpath "com.amazonaws:aws-java-sdk-sts:${awsSdkVersion}"
-    classpath "net.researchgate:gradle-release:${gradleReleasePluginVersion}"
-    classpath "io.spring.gradle:dependency-management-plugin:${gradleDependencyMananagementVersion}"
   }
 }
 
@@ -400,16 +398,6 @@ allprojects {
     }
   }
 
-  // release plugin default configuration
-  if (isPluginApplied("net.researchgate.release")) {
-    logger.info("[${project.name}] applying release plugin default config")
-
-    apply plugin: "net.researchgate.release" // otherwise config below cannot is not applied
-    release {
-      tagTemplate = 'v${version}'
-    }
-  }
-
   // gradle-git-properties default configuration
   if (isPluginApplied("com.gorylenko.gradle-git-properties")) {
     logger.info("[${project.name}] applying gradle-git-properties plugin default config")
@@ -428,6 +416,16 @@ allprojects {
   if (groovyVersion) {
     logger.info("[${project.name}] setting groovy.version ext property to: $groovyVersion")
     ext['groovy.version'] = "${groovyVersion}"
+  }
+}
+
+  // release plugin default configuration
+if (isPluginApplied("net.researchgate.release")) {
+  logger.info("[${project.name}] applying release plugin default config")
+
+  apply plugin: "net.researchgate.release" // otherwise config below cannot is not applied
+  release {
+    tagTemplate = 'v${version}'
   }
 }
 

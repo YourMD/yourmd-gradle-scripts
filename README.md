@@ -8,7 +8,8 @@ in real-projects to reduce build boilerplate.
 | script | description |
 |---|---|
 |[*/gradle/common.gradle*](src/main/resources/gradle/common.gradle)|common build.gradle settings, **required**|
-|[*/gradle/docker.gradle*](src/main/resources/gradle/docker.gradle)|docker image tagging support|
+|[*/gradle/common.gradle*](src/main/resources/gradle/java.gradle)|common build.gradle settings for java projects, requires inclusion of `common.gradle`|
+|[*/gradle/docker.gradle*](src/main/resources/gradle/docker.gradle)|docker image tagging support, requires inclusion of `common.gradle`|
 
 See [src/main/resources/gradle](src/main/resources/gradle) directory for details.
 
@@ -39,13 +40,14 @@ buildscript {
 }
 
 plugins {
-    id "net.researchgate.release" version  "2.4.0" // gradle release plugin (required)
-    id "io.spring.dependency-management" version  "0.6.1.RELEASE" // dependency management plugin (required)
+    id "net.researchgate.release"           version  "2.8.0" // gradle release plugin (required)
+    id "io.spring.dependency-management"    version  "1.0.8.RELEASE" // dependency management plugin (required)
 }
 
 
 // apply default settings from jar
 apply from: getClass().getResource("/gradle/common.gradle")
+apply from: getClass().getResource("/gradle/java.gradle")
 
 // DONE!
 //

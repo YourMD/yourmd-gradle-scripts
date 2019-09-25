@@ -67,10 +67,10 @@ apply plugin: "io.spring.dependency-management"
 ///////////////////////////////////////////////////////////
 
 // groovy
-setExtVar("groovyVersion",      "2.5.7")
+setExtVar("groovyVersion",      "2.5.8")
 
 // logging
-setExtVar("slf4jVersion",       "1.7.26")
+setExtVar("slf4jVersion",       "1.7.28")
 setExtVar("logbackVersion",     "1.2.3")
 
 // testing
@@ -79,12 +79,13 @@ setExtVar("spockVersion",       "1.3-groovy-2.5")
 setExtVar("cglibVersion",       "3.2.12")
 
 // misc
-setExtVar("lombokVersion",      "1.18.8")
+setExtVar("lombokVersion",      "1.18.10")
 setExtVar("servletVersion",     "3.1.0")
 setExtVar("bugsnagVersion",     "2.0.0")
 setExtVar("rxjavaVersion",      "1.3.8")
-setExtVar("rxjava2Version",     "2.2.9")
-setExtVar("guavaVersion",       "28.0-jre")
+setExtVar("rxjava2Version",     "2.2.12")
+setExtVar("guavaVersion",       "28.1-jre")
+setExtVar("awsSdkVersion",      "1.11.632")
 
 // swagger/springfox
 setExtVar("swaggerVersion",     "1.5.10")
@@ -219,14 +220,23 @@ allprojects {
 
   // compile groovy sources with invokedynamic support
   tasks.withType(GroovyCompile) {
-    options.incremental                     = true
+    // gradle >= 5.6 warns about incremental groovy compilation if
+    // java annotation processors are on classpath, gradle >= 6.0 will
+    // fail the build
+    options.incremental                     = false
+    // enforce utf8 encoding for sources on systems with us-ascii locales
+    options.encoding                        = "UTF-8"
     groovyOptions.optimizationOptions.indy  = true
-    options.compilerArgs                    << "-Xlint:deprecation" << "-Xlint:unchecked"
+    options.compilerArgs                    += [ "-Xlint:deprecation", "-Xlint:unchecked", "-Xdiags:verbose" ]
   }
 
   tasks.withType(JavaCompile) {
     options.incremental                     = true
-    options.compilerArgs                    << "-Xlint:deprecation" << "-Xlint:unchecked"
+    // enforce utf8 encoding for sources on systems with us-ascii locales
+    options.encoding                        = "UTF-8"
+    options.compilerArgs                    += [ "-Xlint:deprecation,overrides,divzero,empty,fallthrough,finally,unchecked,static,varargs", "-Xdiags:verbose" ]
+    // TODO: in future :
+    // options.compilerArgs                    += [ "-Xlint:deprecation,unchecked,classfile,divzero,empty,fallthrough,finally,options,overrides,rawtypes,removal,serial,static,varargs", "-Xdiags:verbose" ]
   }
 
   createTask("downloadDeps") {

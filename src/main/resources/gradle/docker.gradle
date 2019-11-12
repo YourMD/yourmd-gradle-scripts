@@ -12,7 +12,7 @@ private void checkPrerequisites() {
 }
 
 def checkIfRequiredPluginsAreApplied() {
-  requireAppliedPlugin("com.palantir.git-version", "0.12.0-rc2")
+  requireAppliedPlugin("com.palantir.git-version", "0.12.2")
   requireAppliedPlugin("com.palantir.docker", "0.22.1")
 }
 

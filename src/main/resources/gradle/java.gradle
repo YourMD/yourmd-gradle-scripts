@@ -190,8 +190,8 @@ allprojects {
 
     // add compileOnly dependencies to test runtime classpath as well.
     sourceSets {
-      test.compileClasspath += configurations.compileOnly
-      test.runtimeClasspath += configurations.compileOnly
+      test.compileClasspath += configurations.compileClasspath
+      test.runtimeClasspath += configurations.compileClasspath
     }
 
     // set publish repos only if there are any sources to publish
@@ -319,7 +319,6 @@ allprojects {
       dependency "io.swagger:swagger-annotations:${swaggerVersion}"
       dependency "io.springfox:springfox-swagger2:${springfoxVersion}"
       dependency "io.springfox:springfox-swagger-ui:${springfoxVersion}"
-      dependency "io.springfox:springfox-staticdocs:${springfoxVersion}"
       dependency "io.github.swagger2markup:swagger2markup-import-files-ext:${swagger2markupVersion}"
       dependency "io.github.swagger2markup:swagger2markup-spring-restdocs-ext:${swagger2markupVersion}"
       dependency "io.github.swagger2markup:swagger2markup-import-schemas-ext:${swagger2markupVersion}"

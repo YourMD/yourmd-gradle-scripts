@@ -57,6 +57,14 @@ private List<String> dockerImageTags() {
                          .toLowerCase()
                          ?: ""
 
+  // We don't want to push version tags in some cases;
+  //
+  // WHY? See this video and https://www.youtube.com/watch?v=rqrw3_604_c
+  //
+  // WARNING: consequence of this decision is that app releases must be done
+  //          in branches other than `master`
+  def allowVersionTags = (branchName != 'master')
+
   // tag name if we're on a tag
   def tagName = gitInfo.isCleanTag ? gitInfo.version : ""
   def projectVersion = version?.trim() ?: ""
@@ -68,12 +76,12 @@ private List<String> dockerImageTags() {
   def result = [ gitInfo.gitHash, gitInfo.gitHashFull ]
   
   // include project version, but only if it's not a snapshot
-  if (projectVersion && !projectVersion.toLowerCase().endsWith('-snapshot')) {
+  if (projectVersion && allowVersionTags && !projectVersion.toLowerCase().endsWith('-snapshot')) {
     result += projectVersion
   }
 
   // git tag?
-  if (tagName) {
+  if (tagName && allowVersionTags) {
     result += [ tagName ]
   }
 

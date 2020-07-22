@@ -48,16 +48,6 @@ private List<String> dockerImageTags() {
     return []
   }
 
-  // default values
-  def defaultUseDate = true
-  def defaultDateFormat = "yyyy-MM-dd-hh-mm-ss"
-  def defaultAllowedBranches = [ "master", "dev" ]
-
-
-  // decide whether last commit date extraction is going to take place
-  def extractDate = ext.has('dockerTagUseDate') ? ext.dockerTagUseDate : defaultUseDate
-  def dateFormat = ext.has('dockerTagDateFormat') ? ext.dockerTagDateFormat : defaultDateFormat
-
   // if branch name is not null or empty and we're not working on a tag,
   // we add a "latest" tag to final result
   def branchName = gitInfo?.getBranchName() ?: ""
@@ -67,40 +57,31 @@ private List<String> dockerImageTags() {
                          .toLowerCase()
                          ?: ""
 
+  // We don't want to push version tags in some cases;
+  //
+  // WHY? See this video and https://www.youtube.com/watch?v=rqrw3_604_c
+  //
+  // WARNING: consequence of this decision is that app releases must be done
+  //          in branches other than `master`
+  def allowVersionTags = (branchName != 'master')
+
   // tag name if we're on a tag
   def tagName = gitInfo.isCleanTag ? gitInfo.version : ""
+  def projectVersion = version?.trim() ?: ""
 
-  logger.info("working on a git branch: '{}', tag: '{}'", branchName, tagName)
+  logger.info("working on a git branch: '{}', tag: '{}', project version: '{}'",
+    branchName, tagName, projectVersion)
 
   // use git hashes for additional tags by default
   def result = [ gitInfo.gitHash, gitInfo.gitHashFull ]
-
-  // git branch?
-  if (branchName) {
-    def allowedBranches = ext.has("dockerTagAllowedBranches") ? ext.dockerTagAllowedBranches : defaultAllowedBranches
-    if (!allowedBranches) {
-      allowedBranches = defaultAllowedBranches
-    }
-
-    logger.info("docker tag allowed branches: {}", allowedBranches)
-    if (allowedBranches.contains(branchName)) {
-      // add branch
-      result += ["branch-" + branchName]
-
-      if (extractDate && gitInfo.git) {
-        def lastCommitDate = lastCommitDate(gitInfo.git)
-        logger.info("last commit date: {}", lastCommitDate)
-        def formatter = DateTimeFormatter.ofPattern(dateFormat)
-        logger.debug("created date formatter: {}", formatter)
-        def formattedDate = formatter.format(lastCommitDate)
-        logger.info("formatted last commit date: {}", formattedDate)
-        result += [ "branch-" + branchName + "-" + formattedDate]
-      }
-    }
+  
+  // include project version, but only if it's not a snapshot
+  if (projectVersion && allowVersionTags && !projectVersion.toLowerCase().endsWith('-snapshot')) {
+    result += projectVersion
   }
 
   // git tag?
-  if (tagName) {
+  if (tagName && allowVersionTags) {
     result += [ tagName ]
   }
 

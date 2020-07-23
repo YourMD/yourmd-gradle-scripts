@@ -12,7 +12,7 @@ private void checkPrerequisites() {
 }
 
 def checkIfRequiredPluginsAreApplied() {
-  requireAppliedPlugin("com.palantir.git-version", "0.12.2")
+  requireAppliedPlugin("com.palantir.git-version", "0.12.3")
   requireAppliedPlugin("com.palantir.docker", "0.22.1")
 }
 
@@ -26,36 +26,25 @@ private ZonedDateTime lastCommitDate(def git) {
 /**
  * Returns list of <b>additional</b> tags that created docker image should be tagged with.<p/>
  *
- * This method reads the following optional {@code ext} values:
- *
- * <ul>
- *     <li><code>dockerTagUseDate</code> (boolean, default: <code>true</code>): try to extract last commit date from git
- *     repository</li>
- *     <li><code>dockerTagUseDate</code> (string, default: <code>yyyy-MM-dd-hh-mm-SS</code>: docker tag date format</li>
- *     <li><code>dockerTagBranches</code> (string list, default: <code>["master", "dev" ]</code>: list of allowed
- *     branches for which special docker tags will be created</li>
- * </ul>
- *
  * @return list of tags that can be used in {@code docker.tags} property
  * @see <a href="https://github.com/palantir/gradle-docker#docker-plugin">gradle-palantir-docker plugin docs</a>
  */
 private List<String> dockerImageTags() {
   logger.info("dockerImageTags(): running in: ${rootProject.name} -> ${project.name}")
-  checkPrerequisites()
 
-  def gitInfo = versionDetails()
+  def gitInfo = gitInfo()
   if (!gitInfo) {
     return []
   }
 
-  // if branch name is not null or empty and we're not working on a tag,
-  // we add a "latest" tag to final result
-  def branchName = gitInfo?.getBranchName() ?: ""
-  branchName = branchName.replaceAll('[^\\w\\-\\.]+', '-')
-                         .replaceAll('\\-{2,}', '-')
-                         .trim()
-                         .toLowerCase()
-                         ?: ""
+  def branchName = gitInfo?.branch
+                        .replaceAll('[^\\w\\-\\.]+', '-')
+                        .replaceAll('\\-{2,}', '-')
+                        .trim()
+                        .toLowerCase()
+                        ?: ''
+  def tagName = gitInfo.tag ?: ''
+  def projectVersion = version?.trim() ?: ''
 
   // We don't want to push version tags in some cases;
   //
@@ -65,24 +54,20 @@ private List<String> dockerImageTags() {
   //          in branches other than `master`
   def allowVersionTags = (branchName != 'master')
 
-  // tag name if we're on a tag
-  def tagName = gitInfo.isCleanTag ? gitInfo.version : ""
-  def projectVersion = version?.trim() ?: ""
-
-  logger.info("working on a git branch: '{}', tag: '{}', project version: '{}'",
-    branchName, tagName, projectVersion)
+  logger.info("working on a git commit: {}, branch: '{}', tag: '{}', project version: '{}'",
+    gitInfo.commit, branchName, tagName, projectVersion)
 
   // use git hashes for additional tags by default
-  def result = [ gitInfo.gitHash, gitInfo.gitHashFull ]
+  def result = [ gitInfo.commit, gitInfo.commit_full ]
   
   // include project version, but only if it's not a snapshot
-  if (projectVersion && allowVersionTags && !projectVersion.toLowerCase().endsWith('-snapshot')) {
+  if (allowVersionTags && projectVersion && !projectVersion.toLowerCase().endsWith('-snapshot')) {
     result += projectVersion
   }
 
   // git tag?
-  if (tagName && allowVersionTags) {
-    result += [ tagName ]
+  if (allowVersionTags && tagName) {
+    result += tagName
   }
 
   // CI systems
@@ -104,36 +89,73 @@ private List<String> dockerImageTags() {
   result
 }
 
+def getGitInfo() {
+  checkPrerequisites()
+  def gitInfo = versionDetails()
+  logger.info("raw git info: {}", gitInfo)
+  return gitInfo
+}
+
+ext.gitInfo = {
+  try {
+    def info = getGitInfo()
+    def dirty = info.version.endsWith('.dirty')
+
+    def res = [
+      branch:       info.getBranchName(),
+      commit_full:  info.getGitHashFull(),
+      commit:       info.getGitHash(),
+      last_tag:     info.getLastTag(),
+      is_tag:       info.getIsCleanTag(),
+      tag:          info.getIsCleanTag() ? info.getVersion() : '',
+      version:      info.getVersion(),
+      clean:        !dirty,
+      dirty:        dirty,
+    ]
+
+    // remove nulls/empty values
+    res = res.findAll { it.value != null && !it.value.toString().isEmpty() }
+    logger.info("git info: {}", res)
+    return res;
+  } catch (Exception e) {
+    logger.warn("exception while trying to obtain git commit info: {}", e.toString())
+    logger.debug("git exception:", e)
+    return [:]
+  }
+}
+
 ext.dockerAdditionalTags = {
   dockerImageTags().toArray(new String[0])
 }
 
-task dockerPushAll {
-  group = "Docker"
-  description = "Pushes docker image with ALL configured tasks to configured docker registry."
-  dependsOn = [ 'docker', 'dockerTag' ]
+if (isPluginApplied("com.palantir.docker")) {
+  task dockerPushAll {
+    group = "Docker"
+    description = "Pushes docker image with ALL configured tasks to configured docker registry."
+    dependsOn = [ 'docker', 'dockerTag' ]
 
-  doLast {
-    def pushTasks = project.tasks
-                           .findAll({ it.name.startsWith('dockerPush') && it.name != name })
-                           .findAll({ it.enabled })
-                           .sort({ a, b -> a.name <=> b.name })
+    doLast {
+      def pushTasks = project.tasks
+                            .findAll({ it.name.startsWith('dockerPush') && it.name != name })
+                            .findAll({ it.enabled })
+                            .sort({ a, b -> a.name <=> b.name })
 
-    pushTasks.each { task ->
-      def action = task.getActions().first()
-      logger.info("  pushing tag: {}", task.name)
-      action.execute(task)
+      pushTasks.each { task ->
+        def action = task.getActions().first()
+        logger.info("  pushing tag: {}", task.name)
+        action.execute(task)
+      }
     }
   }
-}
 
-task dockerInfo {
-  group = "Docker"
-  description = "Displays docker image name and any additional tags."
-  doLast {
-    println("image: " + docker.name)
-    def tags = docker.tags ? docker.tags : []
-    println("tags:  " + tags.join(", "))
+  task dockerInfo {
+    group = "Docker"
+    description = "Displays docker image name and any additional tags."
+    doLast {
+      println("image: " + docker.name)
+      def tags = docker.tags ? docker.tags : []
+      println("tags:  " + tags.join(", "))
+    }
   }
 }
 

@@ -2,6 +2,8 @@
 // build.gradle
 //
 
+import org.gradle.util.GradleVersion
+
 /**
  * Tells whether javadoc plugin is enabled. Javadoc generation can be disabled also
  * by setting {@code javadoc.enabled=false} system property.
@@ -170,6 +172,10 @@ allprojects {
     task sourcesJar(type: Jar, dependsOn: classes, overwrite: false) {
       classifier = "sources"
       from sourceSets.main.allSource, sourceSets.main.java, sourceSets.main.groovy
+
+      if (GradleVersion.current() >= GradleVersion.version("6.0")) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // ignore duplicates
+      }
     }
 
     // javadoc options
@@ -199,13 +205,25 @@ allprojects {
       publishing {
         repositories {
           // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
-          add project.version.endsWith("-SNAPSHOT") ?
+          def repoUrl = project.version.endsWith("-SNAPSHOT") ?
               project.repositories.ymdsnapshots : project.repositories.ymdreleases
+          // add repository for `maven` plugin
+          add repoUrl
+
+          // add repository for `maven-publish` plugin
+          maven {
+            url = repoUrl
+          }
         }
 
         publications {
-          main(MavenPublication) {
+          mavenJava(MavenPublication) {
             from components.java
+
+            versionMapping {
+              usage('java-api')     { fromResolutionOf('runtimeClasspath') }
+              usage('java-runtime') { fromResolutionResult() }
+            }
 
             if (tasks.findByName("sourcesJar")) {
               artifact sourcesJar

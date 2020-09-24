@@ -171,10 +171,10 @@ allprojects {
     // create sources jar
     task sourcesJar(type: Jar, dependsOn: classes, overwrite: false) {
       classifier = "sources"
-      from sourceSets.main.allSource, sourceSets.main.java, sourceSets.main.groovy
+      from sourceSets.main.allSource
 
       if (GradleVersion.current() >= GradleVersion.version("6.0")) {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE // ignore duplicates
+        duplicatesStrategy = DuplicatesStrategy.FAIL // don't allow duplicates
       }
     }
 

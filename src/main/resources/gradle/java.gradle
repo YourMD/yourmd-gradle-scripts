@@ -146,11 +146,6 @@ allprojects {
     mavenCentral()
     jcenter()
 
-    // sonatype repositories
-    maven {
-      url           "https://oss.sonatype.org/content/repositories/releases"
-      mavenContent  { releasesOnly() }
-    }
     maven {
       url           "https://oss.sonatype.org/content/repositories/snapshots"
       mavenContent  { snapshotsOnly() }
@@ -205,15 +200,14 @@ allprojects {
       publishing {
         repositories {
           // https://discuss.gradle.org/t/maven-publish-specify-a-repo-as-being-a-snapshot-repo/374
-          def repoUrl = project.version.endsWith("-SNAPSHOT") ?
+          def dstRepo = project.version.endsWith("-SNAPSHOT") ?
               project.repositories.ymdsnapshots : project.repositories.ymdreleases
-          // add repository for `maven` plugin
-          add repoUrl
 
-          // add repository for `maven-publish` plugin
-          maven {
-            url = repoUrl
-          }
+          // add repository for `maven` plugin
+          add dstRepo
+
+          // return repository for `maven-publish` plugin
+          dstRepo
         }
 
         publications {

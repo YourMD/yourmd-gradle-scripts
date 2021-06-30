@@ -68,24 +68,24 @@ apply plugin: "io.spring.dependency-management"
 ///////////////////////////////////////////////////////////
 
 // groovy
-setExtVar("groovyVersion",      "2.5.8")
+setExtVar("groovyVersion",      "2.5.14")
 
 // logging
-setExtVar("slf4jVersion",       "1.7.28")
+setExtVar("slf4jVersion",       "1.7.30")
 setExtVar("logbackVersion",     "1.2.3")
 
 // testing
-setExtVar("assertjVersion",     "3.14.0")
+setExtVar("assertjVersion",     "3.19.0")
 setExtVar("spockVersion",       "1.3-groovy-2.5")
 setExtVar("cglibVersion",       "3.3.0")
 
 // misc
-setExtVar("lombokVersion",      "1.18.10")
+setExtVar("lombokVersion",      "1.18.20")
 setExtVar("servletVersion",     "3.1.0")
-setExtVar("bugsnagVersion",     "2.0.0")
+setExtVar("bugsnagVersion",     "3.6.2")
 setExtVar("rxjavaVersion",      "1.3.8")
-setExtVar("rxjava2Version",     "2.2.13")
-setExtVar("guavaVersion",       "28.1-jre")
+setExtVar("rxjava2Version",     "2.2.21")
+setExtVar("guavaVersion",       "30.1.1-jre")
 setExtVar("awsSdkVersion",      "1.11.661")
 setExtVar("awsSdk2Version",     "2.10.1")
 
@@ -102,7 +102,7 @@ setExtVar("javaTargetVersion",  "1.8")
 ///////////////////////////////////////////////////////////
 
 // dependency-management plugin is a must, build will fail if plugin is not applied
-requireAppliedPlugin("io.spring.dependency-management", "1.0.8.RELEASE")
+requireAppliedPlugin("io.spring.dependency-management", "1.0.11.RELEASE")
 
 allprojects {
   apply plugin: "java"
@@ -369,7 +369,7 @@ allprojects {
   test {
     failFast          = true
     systemProperties  System.getProperties()
-    jvmArgs           '-noverify', '-XX:TieredStopAtLevel=1'
+    jvmArgs           '-XX:TieredStopAtLevel=1'
   }
 
   // test-logger plugin default configuration

@@ -38,10 +38,10 @@ private List<String> dockerImageTags() {
   }
 
   def branchName = gitInfo?.branch
-                        .replaceAll('[^\\w\\-\\.]+', '-')
-                        .replaceAll('\\-{2,}', '-')
-                        .trim()
-                        .toLowerCase()
+                        ?.replaceAll('[^\\w\\-\\.]+', '-')
+                        ?.replaceAll('\\-{2,}', '-')
+                        ?.trim()
+                        ?.toLowerCase()
                         ?: ''
   def tagName = gitInfo.tag ?: ''
   def projectVersion = version?.trim() ?: ''

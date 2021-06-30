@@ -13,7 +13,7 @@ private void checkPrerequisites() {
 
 def checkIfRequiredPluginsAreApplied() {
   requireAppliedPlugin("com.palantir.git-version", "0.12.3")
-  requireAppliedPlugin("com.google.cloud.tools.jib", "0.25.0")
+  requireAppliedPlugin("com.google.cloud.tools.jib", "3.1.1")
 }
 
 private ZonedDateTime lastCommitDate(def git) {
@@ -38,10 +38,10 @@ private List<String> dockerImageTags() {
   }
 
   def branchName = gitInfo?.branch
-                        .replaceAll('[^\\w\\-\\.]+', '-')
-                        .replaceAll('\\-{2,}', '-')
-                        .trim()
-                        .toLowerCase()
+                        ?.replaceAll('[^\\w\\-\\.]+', '-')
+                        ?.replaceAll('\\-{2,}', '-')
+                        ?.trim()
+                        ?.toLowerCase()
                         ?: ''
   def tagName = gitInfo.tag ?: ''
   def projectVersion = version?.trim() ?: ''
@@ -52,7 +52,7 @@ private List<String> dockerImageTags() {
   //
   // WARNING: consequence of this decision is that app releases must be done
   //          in branches other than `master`
-  def allowVersionTags = (branchName != 'master')
+  def allowVersionTags = !(branchName in [ 'master' ])
 
   logger.info("working on a git commit: {}, branch: '{}', tag: '{}', project version: '{}'",
     gitInfo.commit, branchName, tagName, projectVersion)
@@ -125,7 +125,7 @@ ext.gitInfo = {
 }
 
 ext.dockerAdditionalTags = {
-  dockerImageTags().toArray(new String[0])
+  dockerImageTags()
 }
 
 task jibInfo {

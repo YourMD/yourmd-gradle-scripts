@@ -9,11 +9,11 @@ buildscript {
   repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
   }
   dependencies {
-    classpath "com.amazonaws:aws-java-sdk-core:1.11.573"
-    classpath "com.amazonaws:aws-java-sdk-sts:1.11.573"
+    classpath "com.amazonaws:aws-java-sdk-core:1.12.40"
+    classpath "com.amazonaws:aws-java-sdk-sts:1.12.40"
+    classpath "javax.xml.bind:jaxb-api:2.3.1"
   }
 }
 

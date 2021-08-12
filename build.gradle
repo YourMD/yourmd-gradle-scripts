@@ -11,13 +11,12 @@ plugins {
   id "idea"
   id "eclipse"
 
-  id "net.researchgate.release"         version "2.8.0"
+  id "net.researchgate.release"         version "2.8.1"
 }
 
 repositories {
   mavenLocal()
   mavenCentral()
-  jcenter()
 }
 
 task sourcesJar(type: Jar) {

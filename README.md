@@ -66,7 +66,6 @@ most annoying stuff for your out-of-the-box.
 
   * *mavenLocal*
   * *mavenCentral*
-  * *jcenter*
   * *ymdreleases* (S3)
   * *ymdsnapshots* (S3)
 

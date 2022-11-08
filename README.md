@@ -5,11 +5,12 @@ in real-projects to reduce build boilerplate.
 
 # Included scripts
 
-| script | description |
-|---|---|
-|[*/gradle/common.gradle*](src/main/resources/gradle/common.gradle)|common build.gradle settings, **required**|
-|[*/gradle/common.gradle*](src/main/resources/gradle/java.gradle)|common build.gradle settings for java projects, requires inclusion of `common.gradle`|
-|[*/gradle/docker.gradle*](src/main/resources/gradle/docker.gradle)|docker image tagging support, requires inclusion of `common.gradle`|
+| script                                                             | description                                                                          |
+|--------------------------------------------------------------------|--------------------------------------------------------------------------------------|
+| [*/gradle/common.gradle*](src/main/resources/gradle/common.gradle) | common build.gradle settings, **required**                                           |
+| [*/gradle/java.gradle*](src/main/resources/gradle/java.gradle)     | common build.gradle settings for java projects, requires inclusion of `common.gradle` |
+| [*/gradle/docker.gradle*](src/main/resources/gradle/docker.gradle) | docker image tagging support, requires inclusion of `common.gradle`                  |
+| [*/gradle/jib.gradle*](src/main/resources/gradle/jib.gradle)       | docker `jib` support, requires inclusion of `common.gradle`               |
 
 See [src/main/resources/gradle](src/main/resources/gradle) directory for details.
 
@@ -18,9 +19,9 @@ See [src/main/resources/gradle](src/main/resources/gradle) directory for details
 Clone this project and install artifact jar into local maven repository:
 
 ```
-./gradlew install
+./gradlew clean publishToMavenLocal
 ```
- 
+
 # How to use
 
 ```gradle
@@ -40,8 +41,8 @@ buildscript {
 }
 
 plugins {
-    id "net.researchgate.release"           version  "2.8.0" // gradle release plugin (required)
-    id "io.spring.dependency-management"    version  "1.0.8.RELEASE" // dependency management plugin (required)
+    id "net.researchgate.release"           version  "3.0.2" // gradle release plugin (required)
+    id "io.spring.dependency-management"    version  "1.1.0" // dependency management plugin (required)
 }
 
 
@@ -64,21 +65,21 @@ most annoying stuff for your out-of-the-box.
 
 ## Configured repositories
 
-  * *mavenLocal*
-  * *mavenCentral*
-  * *ymdreleases* (S3)
-  * *ymdsnapshots* (S3)
+* *mavenLocal*
+* *mavenCentral*
+* *ymdreleases* (S3)
+* *ymdsnapshots* (S3)
 
 ## Automatically enabled plugins
 
-  * *java*
-  * *groovy*
-  * *idea*
-  * *eclipse*
-  * *maven*
-  * *maven-publish*
-  * [*net.researchgate.release*](https://github.com/researchgate/gradle-release)
-  * [*io.spring.dependency-management*](https://github.com/spring-gradle-plugins/dependency-management-plugin)
+* *java*
+* *groovy*
+* *idea*
+* *eclipse*
+* *maven*
+* *maven-publish*
+* [*net.researchgate.release*](https://github.com/researchgate/gradle-release)
+* [*io.spring.dependency-management*](https://github.com/spring-gradle-plugins/dependency-management-plugin)
 
 ## Gradle tasks
 
@@ -101,22 +102,34 @@ so everybody using this project ends up with the same dependency set.
 |compileOnly|<ul><li></li></ul>|
 |testCompile|<ul><li>org.slf4j:slf4j-api</li><li>org.codehaus.groovy:groovy-all</li><li>org.spockframework:spock-core</li><li>org.assertj:assertj-core</li></ul>|
 
-
 # How to deploy to maven OSSRH
+
+## via gradle.properties
 
 Add the following to your ```~/.gradle/gradle.properties```:
 
 ```
-ossrhUsername=<osshr_jira_username>
-ossrhPassword=<osshr_jira_password>
+osshr.user=<osshr_jira_username>
+osshr.pass=<osshr_jira_password>
 
-signing.keyId=0B735390
-signing.password=<key_password>
-signing.secretKeyRingFile=<path_to_secring.gpg>
+signing.gpg.key.content=<base64 encoded GPG private key>
+signing.gpg.key.password=<GPG private key password>
 ```
 
-Then upload using:
+## via env variables
+
+set up the following env vars:
 
 ```
-./gradlew uploadArchives
+OSSHR_USER=<osshr_jira_username>
+OSSHR_PASS=<osshr_jira_password>
+
+SIGNING_GPG_KEY_CONTENT=<base64 encoded GPG private key>
+SIGNING_GPG_KEY_PASSWORD=<GPG private key password>
+```
+
+Then upload Sonatype OSSHR using:
+
+```
+./gradlew publish
 ```

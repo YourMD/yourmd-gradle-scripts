@@ -11,8 +11,8 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath "com.amazonaws:aws-java-sdk-core:1.12.40"
-    classpath "com.amazonaws:aws-java-sdk-sts:1.12.40"
+    classpath "com.amazonaws:aws-java-sdk-s3:1.12.336"
+    classpath "com.amazonaws:aws-java-sdk-sts:1.12.336"
     classpath "javax.xml.bind:jaxb-api:2.3.1"
   }
 }
@@ -52,8 +52,6 @@ ext.setupAwsCredentials = {
     awsCredentials.secretKey = defaultCredentials.getAWSSecretKey()
 }
 
-//def createTask2(String name, Class<?> type = null, Closure closure) {
-//}
 ext.createTask = { String name, Class<?> type = null, Closure closure ->
   if (tasks.findByName(name)) {
     logger.info("[WARN] task $name is already defined.")
@@ -70,8 +68,27 @@ ext.createTask = { String name, Class<?> type = null, Closure closure ->
  */
 ext.isPluginApplied = { String pluginId ->
   def result = project.getPluginManager().hasPlugin(pluginId)
-  logger.info("is gradle plugin {} applied: {}", pluginId, result)
+  logger.info("[{}] is gradle plugin {} applied: {}", project.name, pluginId, result)
   return result
+}
+
+ext.applyGitProperties = {
+  def pluginId = "com.gorylenko.gradle-git-properties"
+  if (isPluginApplied(pluginId)) {
+    logger.info("[{}] applying gradle-git-properties plugin default config", project.name)
+
+    apply plugin: pluginId // otherwise config below cannot be applied
+    gitProperties {
+      dateFormat          = "yyyy-MM-dd'T'HH:mm:ssZ"
+      dateFormatTimeZone  = "UTC"
+      // gitPropertiesResourceDir = "${project.buildDir}/resources/main"
+
+      keys                = [
+              'git.branch', 'git.build.version', 'git.commit.id',
+              'git.commit.id.abbrev', 'git.commit.time', 'git.remote.origin.url',
+      ]
+    }
+  }
 }
 
 /**
@@ -193,19 +210,7 @@ allprojects {
     doLast { project.plugins.each { println it.getClass().getSimpleName() }}
   }
 
-  // gradle-git-properties default configuration
-  if (isPluginApplied("com.gorylenko.gradle-git-properties")) {
-    logger.info("[${project.name}] applying gradle-git-properties plugin default config")
-
-    apply plugin: "com.gorylenko.gradle-git-properties" // otherwise config below cannot be applied
-    gitProperties {
-      dateFormat          = "yyyy-MM-dd' 'HH:mm:ssZ"
-      dateFormatTimeZone  = "UTC"
-      gitPropertiesDir    = "${project.buildDir}/resources/main"
-
-      keys                = [ 'git.build.version', 'git.commit.id', 'git.commit.id.abbrev','git.commit.time' ]
-    }
-  }
+  applyGitProperties()
 }
 
 // release plugin default configuration

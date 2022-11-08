@@ -69,14 +69,16 @@ apply plugin: "io.spring.dependency-management"
 
 // groovy
 setExtVar("groovyVersion",      "2.5.14")
+setExtVar("groovy3Version",     "3.0.13")
+setExtVar("groovy4Version",     "4.0.6")
 
 // logging
-setExtVar("slf4jVersion",       "1.7.30")
-setExtVar("logbackVersion",     "1.2.3")
+setExtVar("slf4jVersion",       "1.7.36")
+setExtVar("logbackVersion",     "1.2.11")
 
 // testing
-setExtVar("assertjVersion",     "3.19.0")
-setExtVar("spockVersion",       "1.3-groovy-2.5")
+setExtVar("assertjVersion",     "3.23.1")
+setExtVar("spockVersion",       "2.3-groovy-3.0")
 setExtVar("cglibVersion",       "3.3.0")
 
 // misc
@@ -85,24 +87,24 @@ setExtVar("servletVersion",     "3.1.0")
 setExtVar("bugsnagVersion",     "3.6.2")
 setExtVar("rxjavaVersion",      "1.3.8")
 setExtVar("rxjava2Version",     "2.2.21")
-setExtVar("guavaVersion",       "30.1.1-jre")
-setExtVar("awsSdkVersion",      "1.11.661")
-setExtVar("awsSdk2Version",     "2.10.1")
+setExtVar("rxjava3Version",     "3.1.5")
+setExtVar("guavaVersion",       "31.1-jre")
+setExtVar("awsSdkVersion",      "1.12.336")
+setExtVar("awsSdk2Version",     "2.18.12")
 
 // swagger/springfox
-setExtVar("swaggerVersion",     "1.5.24")
-setExtVar("swagger3Version",    "2.0.10")
-setExtVar("springfoxVersion",   "2.9.2")
-setExtVar("swagger2markupVersion", "1.3.3")
+setExtVar("swaggerVersion",     "1.6.8")
+setExtVar("swagger3Version",    "2.2.6")
+setExtVar("springfoxVersion",   "3.0.0")
 
 // java compiler
-setExtVar("javaSourceVersion",  "1.8")
-setExtVar("javaTargetVersion",  "1.8")
+setExtVar("javaSourceVersion",  "11")
+setExtVar("javaTargetVersion",  "11")
 
 ///////////////////////////////////////////////////////////
 
 // dependency-management plugin is a must, build will fail if plugin is not applied
-requireAppliedPlugin("io.spring.dependency-management", "1.0.11.RELEASE")
+requireAppliedPlugin("io.spring.dependency-management", "1.1.0")
 
 allprojects {
   apply plugin: "java"
@@ -325,14 +327,12 @@ allprojects {
       // misc
       dependency "io.reactivex:rxjava:${rxjavaVersion}"
       dependency "io.reactivex.rxjava2:rxjava:${rxjava2Version}"
+      dependency "io.reactivex.rxjava3:rxjava:${rxjava3Version}"
 
       // swagger/springfox
+      dependency "io.springfox:springfox-boot-starter:${springfoxVersion}"
       dependency "io.swagger:swagger-annotations:${swaggerVersion}"
-      dependency "io.springfox:springfox-swagger2:${springfoxVersion}"
-      dependency "io.springfox:springfox-swagger-ui:${springfoxVersion}"
-      dependency "io.github.swagger2markup:swagger2markup-import-files-ext:${swagger2markupVersion}"
-      dependency "io.github.swagger2markup:swagger2markup-spring-restdocs-ext:${swagger2markupVersion}"
-      dependency "io.github.swagger2markup:swagger2markup-import-schemas-ext:${swagger2markupVersion}"
+      dependency "io.swagger.core.v3:swagger-annotations:${swagger3Version}"
 
       // testing
       dependency "org.spockframework:spock-core:${spockVersion}"
@@ -382,11 +382,6 @@ allprojects {
     }
   }
 
-  // groovy.version
-  if (groovyVersion) {
-    logger.info("[${project.name}] setting groovy.version ext property to: $groovyVersion")
-    ext['groovy.version'] = "${groovyVersion}"
-  }
 }
 
 if (project.tasks.test) {

@@ -1,0 +1,25 @@
+//
+// Gradle build fragment
+//
+
+apply plugin: "signing"
+
+def gpgKeyAsciiContent  = sysPropOrEnvVar('signing.gpg.key.content')
+def gpgKeyPassword      = sysPropOrEnvVar('signing.gpg.key.password')
+
+signing {
+  // fetch PGP key in ascii-export format and password from Java
+  // system properties or environment variable
+  useInMemoryPgpKeys(gpgKeyAsciiContent, gpgKeyPassword)
+
+  // define what to sign
+  sign publishing.publications
+}
+
+tasks.withType(Sign) {
+  // only do gpg sign if GPG key and password are defined and this is a release build
+  onlyIf { isReleaseVersion && gpgKeyAsciiContent && gpgKeyPassword }
+}
+
+// vim:shiftwidth=2 softtabstop=2 expandtab
+// EOF

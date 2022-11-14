@@ -28,5 +28,13 @@ tasks.withType(AbstractArchiveTask) {
 apply from: "${rootDir}/gradle/functions.gradle"
 apply from: "${rootDir}/gradle/maven-publish.gradle"
 
+// https://github.com/researchgate/gradle-release
+release {
+  tagTemplate = '${version}'
+  git {
+    requireBranch.set('')
+  }
+}
+
 // vim:shiftwidth=2 softtabstop=2 expandtab
 // EOF

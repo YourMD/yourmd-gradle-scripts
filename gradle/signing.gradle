@@ -4,7 +4,8 @@
 
 apply plugin: "signing"
 
-def gpgKeyAsciiContent  = sysPropOrEnvVar('signing.gpg.key.content')
+def gpgKeyContentB64    = sysPropOrEnvVar('signing.gpg.key.content')
+def gpgKeyAsciiContent  = new String(gpgKeyContentB64.decodeBase64())
 def gpgKeyPassword      = sysPropOrEnvVar('signing.gpg.key.password')
 
 signing {

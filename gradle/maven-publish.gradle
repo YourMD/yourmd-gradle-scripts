@@ -7,7 +7,7 @@ apply plugin: "maven-publish"
 apply from: "${rootDir}/gradle/signing.gradle"
 
 task sourcesJar(type: Jar) {
-  classifier = "sources"
+  archiveClassifier = "sources"
   from sourceSets.main.allSource
 }
 

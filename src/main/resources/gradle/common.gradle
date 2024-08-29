@@ -224,7 +224,7 @@ if (isPluginApplied("net.researchgate.release")) {
     
     git {
       // allow releases from any branch
-      requireBranch.set('')
+      requireBranch=""
     }
   }
 }

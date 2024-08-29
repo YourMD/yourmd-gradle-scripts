@@ -166,7 +166,7 @@ allprojects {
 
     // create sources jar
     task sourcesJar(type: Jar, dependsOn: classes, overwrite: false) {
-      classifier = "sources"
+      archiveClassifier = "sources"
       from sourceSets.main.allSource
 
       if (GradleVersion.current() >= GradleVersion.version("6.0")) {
@@ -186,7 +186,7 @@ allprojects {
     }
 
     task javadocJar(type: Jar, dependsOn: [classes,javadoc], overwrite: false) {
-      classifier = "javadoc"
+      archiveClassifier = "javadoc"
       from javadoc.destinationDir
     }
 

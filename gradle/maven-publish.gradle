@@ -24,8 +24,12 @@ publishing {
 
       url = isReleaseVersion ? urlReleases : urlSnapshots
       credentials {
-        username sysPropOrEnvVar('osshr.user')
-        password sysPropOrEnvVar('osshr.pass')
+//        username sysPropOrEnvVar('osshr.user')
+//        password sysPropOrEnvVar('osshr.pass')
+//        username sysPropOrEnvVar('osshr.usertoken.username')
+//        password sysPropOrEnvVar('osshr.usertoken.password')
+        username sysPropOrEnvVar('OSSHR_USERTOKEN_USERNAME')
+        password sysPropOrEnvVar('OSSHR_USERTOKEN_PASSWORD')
       }
     }
   }

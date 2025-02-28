@@ -41,7 +41,7 @@ buildscript {
 }
 
 plugins {
-    id "net.researchgate.release"           version  "3.0.2" // gradle release plugin (required)
+    id "net.researchgate.release"           version  "3.1.0" // gradle release plugin (required)
     id "io.spring.dependency-management"    version  "1.1.0" // dependency management plugin (required)
 }
 

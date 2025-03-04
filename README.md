@@ -16,11 +16,11 @@ See [scripts](scripts) directory for details.
 
 # Versions
 
-This repository has gone through a shift from version 0.4.0 in the way it is used. 
-In general, aim to use version >=0.4.0, as it is suitable for Gradle 8.10.
+This repository has gone through a shift from version 1.0.0 in the way it is used. 
+In general, aim to use version >=1.0.0, as it is suitable for Gradle 8.10.
 If for any reason an older version of Gradle is needed, use <=0.3.6.
 
-# Using version >=0.4.0
+# Using version >=1.0.0
 
 New versions of these scripts will need to be used as git submodules in each project. 
 
@@ -29,10 +29,10 @@ Before committing, make sure the submodule is pinned to a tag and NOT a branch.
 ```
 git submodule add https://github.com/YourMD/yourmd-gradle-scripts.git gradle/common-scripts
 cd gradle/common-scripts
-git checkout 0.4.0
+git checkout 1.0.0
 ```
 
-### How to use (version >=0.4.0)
+### How to use (version >=1.0.0)
 
 To import a common script in Gradle after adding the submodule, use the following import method
 in your Gradle project:

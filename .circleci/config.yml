@@ -20,10 +20,6 @@ jobs:
           name: Artifact build
           command: ./gradlew clean build
 
-      - run:
-          name: Deploy java artifacts to sonatype OSSHR
-          command: ./gradlew publish -s
-
       - save_cache:
           when: always
           key: v1-dependencies-{{ checksum "build.gradle" }}

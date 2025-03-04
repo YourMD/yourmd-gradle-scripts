@@ -98,8 +98,8 @@ setExtVar("swagger3Version",    "2.2.6")
 setExtVar("springfoxVersion",   "3.0.0")
 
 // java compiler
-setExtVar("javaSourceVersion",  "11")
-setExtVar("javaTargetVersion",  "11")
+setExtVar("javaSourceVersion",  "JavaVersion.VERSION_11")
+setExtVar("javaTargetVersion",  "JavaVersion.VERSION_11")
 
 ///////////////////////////////////////////////////////////
 
@@ -153,7 +153,7 @@ allprojects {
     }
   }
 
-  plugins.withType(JavaPlugin) {
+  java {
     // java bytecode version
     sourceCompatibility = "${javaSourceVersion}"
     targetCompatibility = "${javaTargetVersion}"

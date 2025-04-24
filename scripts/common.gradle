@@ -221,11 +221,6 @@ if (isPluginApplied("net.researchgate.release")) {
   release {
     tagTemplate                 = 'v${version}'
     failOnSnapshotDependencies  = false
-    
-    git {
-      // allow releases from any branch
-      requireBranch.set("")
-    }
   }
 }
 

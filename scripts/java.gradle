@@ -97,8 +97,6 @@ setExtVar("swaggerVersion",     "1.6.8")
 setExtVar("swagger3Version",    "2.2.6")
 setExtVar("springfoxVersion",   "3.0.0")
 
-///////////////////////////////////////////////////////////
-
 // dependency-management plugin is a must, build will fail if plugin is not applied
 requireAppliedPlugin("io.spring.dependency-management", "1.1.7")
 
@@ -151,8 +149,8 @@ allprojects {
 
   java {
     // java bytecode version
-    sourceCompatibility = JavaVersion.VERSION_13
-    targetCompatibility = JavaVersion.VERSION_13
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     // create jar only if there is something to package
     boolean hasSources = !sourceSets.main.allSource.files.isEmpty()

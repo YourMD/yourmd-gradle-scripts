@@ -5,7 +5,6 @@
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 private void checkPrerequisites() {
   checkIfRequiredPluginsAreApplied()
@@ -129,7 +128,7 @@ ext.dockerAdditionalTags = {
 }
 
 task jibInfo {
-  group "jib"
+  group = "jib"
   description = "Displays jib docker image name and any additional tags."
   doLast {
     println("image: " + jib.to.image)

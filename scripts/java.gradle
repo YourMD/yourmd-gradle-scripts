@@ -98,8 +98,8 @@ setExtVar("swagger3Version",    "2.2.6")
 setExtVar("springfoxVersion",   "3.0.0")
 
 // java compiler
-setExtVar("javaSourceVersion",  "JavaVersion.VERSION_11")
-setExtVar("javaTargetVersion",  "JavaVersion.VERSION_11")
+setExtVar("javaSourceVersion",  "JavaVersion.VERSION_17")
+setExtVar("javaTargetVersion",  "JavaVersion.VERSION_17")
 
 ///////////////////////////////////////////////////////////
 
@@ -118,8 +118,8 @@ allprojects {
     mavenLocal()
 
     maven {
-      name          "ymdreleases"
-      url           "s3://yourmd-artifacts/maven/releases"
+      name          = "ymdreleases"
+      url           = "s3://yourmd-artifacts/maven/releases"
       credentials   (AwsCredentials, setupAwsCredentials)
 
       mavenContent  { releasesOnly() }
@@ -132,8 +132,8 @@ allprojects {
     }
 
     maven {
-      name          "ymdsnapshots"
-      url           "s3://yourmd-artifacts/maven/snapshots"
+      name          = "ymdsnapshots"
+      url           = "s3://yourmd-artifacts/maven/snapshots"
       credentials   (AwsCredentials, setupAwsCredentials)
 
       mavenContent  { snapshotsOnly() }
@@ -148,7 +148,7 @@ allprojects {
     mavenCentral()
 
     maven {
-      url           "https://oss.sonatype.org/content/repositories/snapshots"
+      url           = "https://oss.sonatype.org/content/repositories/snapshots"
       mavenContent  { snapshotsOnly() }
     }
   }
@@ -254,8 +254,8 @@ allprojects {
   }
 
   createTask("downloadDeps") {
-    group       "Misc"
-    description "Downloads all required dependencies."
+    group       = "Misc"
+    description = "Downloads all required dependencies."
     doLast {
       project.rootProject.allprojects.each { subProject ->
         subProject.buildscript.configurations.each { configuration ->
@@ -377,8 +377,8 @@ allprojects {
 
     apply plugin: "com.adarshr.test-logger" // otherwise config below cannot is not applied
     testlogger {
-      theme         "mocha"
-      slowThreshold 5000
+      theme         = "mocha"
+      slowThreshold = 5000
     }
   }
 

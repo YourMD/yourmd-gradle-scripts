@@ -179,14 +179,14 @@ allprojects {
 
   // enable support for reproducible JAR archive builds
   // SEE: https://docs.gradle.org/3.5/userguide/working_with_files.html#sec:reproducible_archives
-  tasks.withType(AbstractArchiveTask) {
-    preserveFileTimestamps  = false
-    reproducibleFileOrder   = true
+  tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
   }
 
   createTask("awsCredentials") {
-    group       "Misc"
-    description "Displays AWS client credentials."
+    group       = "Misc"
+    description = "Displays AWS client credentials."
     doLast {
       def creds = project.repositories.ymdreleases.getCredentials(AwsCredentials)
       println("AWS accessKey: " + creds.accessKey)
@@ -195,8 +195,8 @@ allprojects {
   }
 
   createTask("repositories") {
-    group       "Misc"
-    description "Displays all configured repositories."
+    group       = "Misc"
+    description = "Displays all configured repositories."
     doLast {
       project.repositories.each {
         printf("%-30s %s\n", it.name, it.url)
@@ -205,8 +205,8 @@ allprojects {
   }
 
   createTask("lsPlugins") {
-    group       "Misc"
-    description "Displays enabled plugins."
+    group       = "Misc"
+    description = "Displays enabled plugins."
     doLast { project.plugins.each { println it.getClass().getSimpleName() }}
   }
 

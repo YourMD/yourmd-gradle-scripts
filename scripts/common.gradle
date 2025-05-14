@@ -223,7 +223,7 @@ if (isPluginApplied("net.researchgate.release")) {
     failOnSnapshotDependencies  = false
     git {
       // allow releases from any branch
-      requireBranch =""
+      requireBranch.set("")
     }
   }
 }

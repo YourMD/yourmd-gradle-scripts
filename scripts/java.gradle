@@ -151,8 +151,8 @@ allprojects {
 
   java {
     // java bytecode version
-    sourceCompatibility = JavaVersion.VERSION_13
-    targetCompatibility = JavaVersion.VERSION_13
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     // create jar only if there is something to package
     boolean hasSources = !sourceSets.main.allSource.files.isEmpty()
